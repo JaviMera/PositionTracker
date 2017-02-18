@@ -4,7 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
-import java.util.Date;
+import com.javier.positiontracker.model.UserLocation;
 
 /**
  * Created by javie on 2/17/2017.
@@ -19,15 +19,15 @@ public class PositionTrackerDataSource {
         mHelper = new PositionTrackerSQLiteHelper(ctx);
     }
 
-    public void create() {
+    public long create(UserLocation location) {
 
         SQLiteDatabase mDb = mHelper.getWritableDatabase();
         mDb.beginTransaction();
 
         ContentValues values = new ContentValues();
-        values.put(PositionTrackerSQLiteHelper.LOCATION_LAT, 2);
-        values.put(PositionTrackerSQLiteHelper.LOCATION_LONG, -2);
-        values.put(PositionTrackerSQLiteHelper.LOCATION_DATE, new Date().getTime());
+        values.put(PositionTrackerSQLiteHelper.LOCATION_LAT, location.getLatLong().latitude);
+        values.put(PositionTrackerSQLiteHelper.LOCATION_LONG, location.getLatLong().longitude);
+        values.put(PositionTrackerSQLiteHelper.LOCATION_DATE, location.getDate());
 
         long rowId = mDb.insert(
                 PositionTrackerSQLiteHelper.LOCATION_TABLE,
@@ -36,5 +36,7 @@ public class PositionTrackerDataSource {
 
         mDb.setTransactionSuccessful();
         mDb.endTransaction();
+        mDb.close();
+        return rowId;
     }
 }
