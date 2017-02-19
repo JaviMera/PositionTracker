@@ -20,6 +20,6 @@ public class MainActivity extends AppCompatActivity {
         UserLocation location = new UserLocation(latLng, date);
 
         PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-        source.create(location);
+        source.insertUserLocation(location);
     }
 }

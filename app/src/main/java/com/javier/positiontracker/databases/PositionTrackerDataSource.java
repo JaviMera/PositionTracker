@@ -2,9 +2,16 @@ package com.javier.positiontracker.databases;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.model.UserLocation;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by javie on 2/17/2017.
@@ -13,15 +20,16 @@ import com.javier.positiontracker.model.UserLocation;
 public class PositionTrackerDataSource {
 
     private PositionTrackerSQLiteHelper mHelper;
+    private SQLiteDatabase mDb;
 
     public PositionTrackerDataSource(Context ctx) {
 
         mHelper = new PositionTrackerSQLiteHelper(ctx);
     }
 
-    public long create(UserLocation location) {
+    public long insertUserLocation(UserLocation location) {
 
-        SQLiteDatabase mDb = mHelper.getWritableDatabase();
+        mDb = mHelper.getWritableDatabase();
         mDb.beginTransaction();
 
         ContentValues values = new ContentValues();
@@ -37,6 +45,82 @@ public class PositionTrackerDataSource {
         mDb.setTransactionSuccessful();
         mDb.endTransaction();
         mDb.close();
+
         return rowId;
+    }
+
+    public long insertUserLocationTime(double latitude, double longitude) {
+
+        mDb = mHelper.getWritableDatabase();
+        mDb.beginTransaction();
+
+        ContentValues values = new ContentValues();
+        values.put(PositionTrackerSQLiteHelper.LOCATION_TIME_LAT, latitude);
+        values.put(PositionTrackerSQLiteHelper.LOCATION_TIME_LONG, longitude);
+
+        long rowId = mDb.insert(
+            PositionTrackerSQLiteHelper.LOCATION_TIME_TABLE,
+            null,
+            values
+        );
+
+        mDb.setTransactionSuccessful();
+        mDb.endTransaction();
+        mDb.close();
+
+        return rowId;
+    }
+
+    public boolean isClosed() {
+
+        return !mDb.isOpen();
+    }
+
+    public void clean() {
+
+        mDb = mHelper.getWritableDatabase();
+        mDb.delete(PositionTrackerSQLiteHelper.LOCATION_TABLE, null, null);
+        mDb.delete(PositionTrackerSQLiteHelper.LOCATION_TIME_TABLE, null, null);
+
+        mDb.close();
+    }
+
+    public List<UserLocation> readLocationsWithRange(long minDate, long maxDate) {
+
+        List<UserLocation> locations = new LinkedList<>();
+        mDb = mHelper.getReadableDatabase();
+        mDb.beginTransaction();
+
+        Cursor cursor = mDb.query(
+            PositionTrackerSQLiteHelper.LOCATION_TABLE,
+            new String[]{
+                PositionTrackerSQLiteHelper.LOCATION_LAT,
+                PositionTrackerSQLiteHelper.LOCATION_LONG,
+                PositionTrackerSQLiteHelper.LOCATION_DATE,
+            },
+            PositionTrackerSQLiteHelper.LOCATION_DATE + " BETWEEN ? AND ?",
+            new String[]{String.valueOf(minDate), String.valueOf(maxDate)},
+            null,null,null
+        );
+
+        if(cursor.moveToFirst()) {
+
+            do {
+
+                long latitude = cursor.getLong(cursor.getColumnIndex(PositionTrackerSQLiteHelper.LOCATION_LAT));
+                long longitude = cursor.getLong(cursor.getColumnIndex(PositionTrackerSQLiteHelper.LOCATION_LONG));
+                long date = cursor.getLong(cursor.getColumnIndex(PositionTrackerSQLiteHelper.LOCATION_DATE));
+
+                UserLocation location = new UserLocation(new LatLng(latitude, longitude), date);
+                locations.add(location);
+
+            }while(cursor.moveToNext());
+        }
+
+        mDb.setTransactionSuccessful();
+        mDb.endTransaction();
+        mDb.close();
+
+        return locations;
     }
 }
