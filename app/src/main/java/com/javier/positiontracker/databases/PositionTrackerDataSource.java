@@ -107,9 +107,9 @@ public class PositionTrackerDataSource {
 
             do {
 
-                long latitude = cursor.getLong(cursor.getColumnIndex(PositionTrackerSQLiteHelper.LOCATION_LAT));
-                long longitude = cursor.getLong(cursor.getColumnIndex(PositionTrackerSQLiteHelper.LOCATION_LONG));
-                long date = cursor.getLong(cursor.getColumnIndex(PositionTrackerSQLiteHelper.LOCATION_DATE));
+                long latitude = readLong(cursor, PositionTrackerSQLiteHelper.LOCATION_LAT);
+                long longitude = readLong(cursor, PositionTrackerSQLiteHelper.LOCATION_LONG);
+                long date = readLong(cursor, PositionTrackerSQLiteHelper.LOCATION_DATE);
 
                 UserLocation location = new UserLocation(new LatLng(latitude, longitude), date);
                 locations.add(location);
@@ -122,5 +122,11 @@ public class PositionTrackerDataSource {
         mDb.close();
 
         return locations;
+    }
+
+    private long readLong(Cursor cursor, String column) {
+
+        int index = cursor.getColumnIndex(column);
+        return cursor.getLong(index);
     }
 }
