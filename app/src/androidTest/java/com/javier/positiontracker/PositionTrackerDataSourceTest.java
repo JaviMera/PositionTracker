@@ -6,13 +6,16 @@ import android.support.test.runner.AndroidJUnit4;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
+import com.javier.positiontracker.exceptions.ExistingLocationException;
 import com.javier.positiontracker.model.UserLocation;
 
 import junit.framework.Assert;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 
 import java.util.Calendar;
@@ -28,6 +31,9 @@ import java.util.List;
 public class PositionTrackerDataSourceTest {
 
     private PositionTrackerDataSource mTarget;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void name() throws Exception {
@@ -123,6 +129,35 @@ public class PositionTrackerDataSourceTest {
         // Assert
         Assert.assertNotNull(locations);
         Assert.assertEquals(expectedSize, locations.size());
+    }
+
+    @Test
+    public void existingLocationReturnsTrue() throws Exception{
+
+        // Arrange
+        Date date1 = getDate(2017, Calendar.JANUARY, 1);
+        UserLocation location1 = new UserLocation(new LatLng(14,100), date1.getTime());
+
+        // Act
+        mTarget.insertUserLocation(location1);
+        boolean hasLocation = mTarget.hasLocation(location1);
+
+        // Assert
+        Assert.assertTrue(hasLocation);
+    }
+
+    @Test
+    public void nonExistingLocationReturnsFalse() throws Exception{
+
+        // Arrange
+        Date date1 = getDate(2017, Calendar.JANUARY, 1);
+        UserLocation location1 = new UserLocation(new LatLng(14,100), date1.getTime());
+
+        // Act
+        boolean hasLocation = mTarget.hasLocation(location1);
+
+        // Assert
+        Assert.assertFalse(hasLocation);
     }
 
     private Date getDate(int year, int month, int day) {

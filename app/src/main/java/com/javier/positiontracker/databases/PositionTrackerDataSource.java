@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.javier.positiontracker.exceptions.ExistingLocationException;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.util.ArrayList;
@@ -128,5 +129,39 @@ public class PositionTrackerDataSource {
 
         int index = cursor.getColumnIndex(column);
         return cursor.getLong(index);
+    }
+
+
+    public boolean hasLocation(UserLocation location) {
+
+        mDb = mHelper.getReadableDatabase();
+        mDb.beginTransaction();
+
+        double latitude = location.getLatLong().latitude;
+        double longitude = location.getLatLong().longitude;
+
+        Cursor cursor = mDb.query(
+                PositionTrackerSQLiteHelper.LOCATION_TABLE,
+                new String[]{
+                    PositionTrackerSQLiteHelper.LOCATION_LAT,
+                    PositionTrackerSQLiteHelper.LOCATION_LONG
+                },
+                PositionTrackerSQLiteHelper.LOCATION_LAT + "=? AND " + PositionTrackerSQLiteHelper.LOCATION_LONG + "=?",
+                new String[]{String.valueOf(latitude), String.valueOf(longitude)},
+                null,null,null
+        );
+
+        boolean recordExists = false;
+        if(cursor.moveToFirst()) {
+
+            cursor.close();
+            recordExists = true;
+        }
+
+        mDb.setTransactionSuccessful();
+        mDb.endTransaction();
+        mDb.close();
+
+        return recordExists;
     }
 }

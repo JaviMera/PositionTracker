@@ -21,6 +21,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.databases.PositionTrackerSQLiteHelper;
+import com.javier.positiontracker.exceptions.ExistingLocationException;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.util.Date;
@@ -114,14 +115,19 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onLocationChanged(Location location) {
 
+        mLastLocation = location;
+
         PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+
         UserLocation userLocation = new UserLocation(
             new LatLng(location.getLatitude(), location.getLongitude()),
             location.getTime()
         );
 
-        source.insertUserLocation(userLocation);
+        // Check if the location already exists in the database
+        if(source.hasLocation(userLocation))
+            return;
 
-        mLastLocation = location;
+        source.insertUserLocation(userLocation);
     }
 }
