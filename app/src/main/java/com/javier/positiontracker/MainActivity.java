@@ -115,19 +115,27 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onLocationChanged(Location location) {
 
-        mLastLocation = location;
+        // If it's a new location, proceed to storing it in the database
+        if(mLastLocation != location) {
 
-        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+            mLastLocation = location;
 
-        UserLocation userLocation = new UserLocation(
-            new LatLng(location.getLatitude(), location.getLongitude()),
-            location.getTime()
-        );
+            PositionTrackerDataSource source = new PositionTrackerDataSource(this);
 
-        // Check if the location already exists in the database
-        if(source.hasLocation(userLocation))
-            return;
+            UserLocation userLocation = new UserLocation(
+                new LatLng(location.getLatitude(), location.getLongitude()),
+                location.getTime()
+            );
 
-        source.insertUserLocation(userLocation);
+            // Check if the location already exists in the database
+            if(source.hasLocation(userLocation))
+                return;
+
+            source.insertUserLocation(userLocation);
+        }
+        // TODO: implement time accumulation in same location
+        else {
+
+        }
     }
 }
