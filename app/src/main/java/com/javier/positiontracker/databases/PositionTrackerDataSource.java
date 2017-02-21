@@ -4,13 +4,10 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.javier.positiontracker.exceptions.ExistingLocationException;
 import com.javier.positiontracker.model.UserLocation;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -39,9 +36,9 @@ public class PositionTrackerDataSource {
         values.put(PositionTrackerSQLiteHelper.LOCATION_DATE, location.getDate());
 
         long rowId = mDb.insert(
-                PositionTrackerSQLiteHelper.LOCATION_TABLE,
-                null,
-                values);
+            PositionTrackerSQLiteHelper.LOCATION_TABLE,
+            null,
+            values);
 
         mDb.setTransactionSuccessful();
         mDb.endTransaction();
@@ -108,9 +105,9 @@ public class PositionTrackerDataSource {
 
             do {
 
-                long latitude = readLong(cursor, PositionTrackerSQLiteHelper.LOCATION_LAT);
-                long longitude = readLong(cursor, PositionTrackerSQLiteHelper.LOCATION_LONG);
-                long date = readLong(cursor, PositionTrackerSQLiteHelper.LOCATION_DATE);
+                double latitude = readDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LAT);
+                double longitude = readDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LONG);
+                long date = getLong(cursor, PositionTrackerSQLiteHelper.LOCATION_DATE);
 
                 UserLocation location = new UserLocation(new LatLng(latitude, longitude), date);
                 locations.add(location);
@@ -125,10 +122,16 @@ public class PositionTrackerDataSource {
         return locations;
     }
 
-    private long readLong(Cursor cursor, String column) {
+    private long getLong(Cursor cursor, String column) {
 
         int index = cursor.getColumnIndex(column);
         return cursor.getLong(index);
+    }
+
+    private double readDouble(Cursor cursor, String column) {
+
+        int index = cursor.getColumnIndex(column);
+        return cursor.getDouble(index);
     }
 
 
