@@ -1,14 +1,9 @@
 package com.javier.positiontracker;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Camera;
 import android.location.Location;
-import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.Bundle;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -31,13 +26,14 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
+import com.javier.positiontracker.dialogs.DateRangeListener;
+import com.javier.positiontracker.dialogs.DialogDateRange;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import android.os.Handler;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -47,7 +43,9 @@ public class MainActivity extends AppCompatActivity
         implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        LocationListener, OnMapReadyCallback {
+        LocationListener,
+        OnMapReadyCallback,
+        DateRangeListener{
 
     public static final int FINE_LOCATION_CODE = 100;
 
@@ -73,15 +71,9 @@ public class MainActivity extends AppCompatActivity
         switch(item.getItemId()) {
 
             case R.id.action_date_range:
-                Date date1 = getDate(2017, Calendar.FEBRUARY, 19, 0, 0);
-                Date date2 = getDate(2017, Calendar.FEBRUARY, 20, 23, 59);
 
-                showLocations(date1, date2);
-                if(!mMarkers.isEmpty()) {
-
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(mMarkers.get(0).getPosition()));
-                }
-
+                DialogDateRange dialog = new DialogDateRange();
+                dialog.show(getSupportFragmentManager(), "dialog_date_range");
                 break;
 
             default:
@@ -225,13 +217,13 @@ public class MainActivity extends AppCompatActivity
         mMap = googleMap;
     }
 
-    private Date getDate(int year, int month, int day, int hour, int minute) {
+    @Override
+    public void onDateRangeSelected(Date startDate, Date endDate) {
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month, day);
-        calendar.set(Calendar.HOUR_OF_DAY, hour);
-        calendar.set(Calendar.MINUTE,minute);
+        showLocations(startDate, endDate);
+        if(!mMarkers.isEmpty()) {
 
-        return calendar.getTime();
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(mMarkers.get(0).getPosition()));
+        }
     }
 }

@@ -1,7 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Select start date"
+            android:textColor="@color/colorPrimary"
+            android:textSize="20sp"
+            android:padding="10dp"
+            android:gravity="center"/>
+
+        <DatePicker
+            android:id="@+id/startDateView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:datePickerMode="spinner"
+            android:calendarViewShown="false"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Select end date"
+            android:textColor="@color/colorPrimary"
+            android:textSize="20sp"
+            android:padding="10dp"
+            android:gravity="center"/>
+
+        <DatePicker
+            android:id="@+id/endDateView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:datePickerMode="spinner"
+            android:calendarViewShown="false"/>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/setDateRangeButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="set"
+        android:textSize="18sp"
+        android:textColor="@color/colorPrimary"
+        android:gravity="end"
+        android:padding="15dp"/>
 </LinearLayout>
