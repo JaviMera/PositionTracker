@@ -3,7 +3,9 @@ package com.javier.positiontracker;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -12,6 +14,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -25,6 +28,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.javier.positiontracker.clients.GoogleClient;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.dialogs.DateRangeListener;
 import com.javier.positiontracker.dialogs.DialogDateRange;
@@ -41,15 +45,13 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity
         implements
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener,
-        LocationListener,
+        GoogleClient.LocationCallback,
         OnMapReadyCallback,
         DateRangeListener{
 
     public static final int FINE_LOCATION_CODE = 100;
 
-    private GoogleApiClient mClient;
+    private GoogleClient mClient;
     private Location mLastLocation;
     private GoogleMap mMap;
     private ArrayList<Marker> mMarkers;
@@ -96,30 +98,20 @@ public class MainActivity extends AppCompatActivity
         SupportMapFragment fragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         fragment.getMapAsync(this);
 
-        mClient = new GoogleApiClient.Builder(this)
-            .addConnectionCallbacks(this)
-            .addOnConnectionFailedListener(this)
-            .addApi(LocationServices.API)
-            .build();
+        mClient = new GoogleClient(this, this);
+    }
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+    @Override
+    protected void onResume() {
 
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_CODE);
-            return;
-        }
-
+        super.onResume();
         mClient.connect();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-
-        if(mClient.isConnected()) {
-
-            LocationServices.FusedLocationApi.removeLocationUpdates(mClient, this);
-            mClient.disconnect();
-        }
+        mClient.disconnect();
     }
 
     @Override
@@ -140,56 +132,9 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
+    public void requestPermissions(String... permissions) {
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return;
-        }
-
-        LocationRequest request = LocationRequest.create()
-            .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
-            .setInterval(10000L)
-            .setFastestInterval(1000L);
-
-        LocationServices.FusedLocationApi.requestLocationUpdates(mClient, request, this);
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-
-        // If it's a new location, proceed to storing it in the database
-        if(mLastLocation != location) {
-
-            mLastLocation = location;
-
-            PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-
-            UserLocation userLocation = new UserLocation(
-                new LatLng(location.getLatitude(), location.getLongitude()),
-                location.getTime()
-            );
-
-            // Check if the location already exists in the database
-            if(source.hasLocation(userLocation))
-                return;
-
-            source.insertUserLocation(userLocation);
-        }
-        // TODO: implement time accumulation in same location
-        else {
-
-        }
+        ActivityCompat.requestPermissions(this, permissions, FINE_LOCATION_CODE);
     }
 
     public void showLocations(Date minDate, Date maxDate) {
@@ -224,6 +169,33 @@ public class MainActivity extends AppCompatActivity
         if(!mMarkers.isEmpty()) {
 
             mMap.moveCamera(CameraUpdateFactory.newLatLng(mMarkers.get(0).getPosition()));
+        }
+    }
+
+    @Override
+    public void onNewLocation(Location location) {
+
+        // If it's a new location, proceed to storing it in the database
+        if(mLastLocation != location) {
+
+            mLastLocation = location;
+
+            PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+
+            UserLocation userLocation = new UserLocation(
+                    new LatLng(location.getLatitude(), location.getLongitude()),
+                    location.getTime()
+            );
+
+            // Check if the location already exists in the database
+            if(source.hasLocation(userLocation))
+                return;
+
+            source.insertUserLocation(userLocation);
+        }
+        // TODO: implement time accumulation in same location
+        else {
+
         }
     }
 }
