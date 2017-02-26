@@ -1,14 +1,17 @@
 package com.javier.positiontracker;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.os.ResultReceiver;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -45,14 +48,11 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity
         implements
-        GoogleClient.LocationCallback,
         OnMapReadyCallback,
         DateRangeListener{
 
     public static final int FINE_LOCATION_CODE = 100;
 
-    private GoogleClient mClient;
-    private Location mLastLocation;
     private GoogleMap mMap;
     private ArrayList<Marker> mMarkers;
 
@@ -98,20 +98,13 @@ public class MainActivity extends AppCompatActivity
         SupportMapFragment fragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         fragment.getMapAsync(this);
 
-        mClient = new GoogleClient(this, this);
-    }
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-    @Override
-    protected void onResume() {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_CODE);
+        }
 
-        super.onResume();
-        mClient.connect();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        mClient.disconnect();
+        Intent intent = new Intent(MainActivity.this, TrackerService.class);
+        startService(intent);
     }
 
     @Override
@@ -126,23 +119,24 @@ public class MainActivity extends AppCompatActivity
                         return;
                     }
 
-                    mClient.connect();
+                    Intent intent = new Intent(MainActivity.this, TrackerService.class);
+                    startService(intent);
                 }
                 break;
         }
     }
 
-    public void requestPermissions(String... permissions) {
-
-        ActivityCompat.requestPermissions(this, permissions, FINE_LOCATION_CODE);
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     public void showLocations(Date minDate, Date maxDate) {
 
         PositionTrackerDataSource source = new PositionTrackerDataSource(this);
         final List<UserLocation> locations = source.readLocationsWithRange(
-                minDate.getTime(),
-                maxDate.getTime()
+            minDate.getTime(),
+            maxDate.getTime()
         );
 
         for (UserLocation location : locations) {
@@ -169,33 +163,6 @@ public class MainActivity extends AppCompatActivity
         if(!mMarkers.isEmpty()) {
 
             mMap.moveCamera(CameraUpdateFactory.newLatLng(mMarkers.get(0).getPosition()));
-        }
-    }
-
-    @Override
-    public void onNewLocation(Location location) {
-
-        // If it's a new location, proceed to storing it in the database
-        if(mLastLocation != location) {
-
-            mLastLocation = location;
-
-            PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-
-            UserLocation userLocation = new UserLocation(
-                    new LatLng(location.getLatitude(), location.getLongitude()),
-                    location.getTime()
-            );
-
-            // Check if the location already exists in the database
-            if(source.hasLocation(userLocation))
-                return;
-
-            source.insertUserLocation(userLocation);
-        }
-        // TODO: implement time accumulation in same location
-        else {
-
         }
     }
 }

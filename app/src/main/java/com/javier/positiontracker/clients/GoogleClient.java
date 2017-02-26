@@ -14,7 +14,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.javier.positiontracker.MainActivity;
+import com.javier.positiontracker.TrackerService;
 
 /**
  * Created by javie on 2/22/2017.
@@ -25,16 +25,17 @@ public class GoogleClient implements
     GoogleApiClient.OnConnectionFailedListener,
     LocationListener {
 
-    public interface LocationCallback {
+    @Override
+    public void onLocationChanged(Location location) {
 
-        void onNewLocation(Location location);
+        mParent.onNewLocation(location);
     }
 
-    private MainActivity mParent;
+    private TrackerService mParent;
     private GoogleApiClient mGoogleClient;
     private LocationRequest mRequest;
 
-    public GoogleClient(Context context, LocationCallback listener) {
+    public GoogleClient(Context context, LocationUpdate listener) {
 
         mGoogleClient = new GoogleApiClient.Builder(context)
             .addConnectionCallbacks(this)
@@ -47,7 +48,7 @@ public class GoogleClient implements
             .setInterval(10000L)
             .setFastestInterval(1000L);
 
-        mParent = (MainActivity) listener;
+        mParent = (TrackerService) listener;
     }
 
     @Override
@@ -56,7 +57,6 @@ public class GoogleClient implements
         if (ActivityCompat.checkSelfPermission(mGoogleClient.getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(mGoogleClient.getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
-            mParent.requestPermissions(Manifest.permission.ACCESS_FINE_LOCATION);
             return;
         }
 
@@ -71,12 +71,6 @@ public class GoogleClient implements
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-
-        mParent.onNewLocation(location);
     }
 
     public void connect() {
