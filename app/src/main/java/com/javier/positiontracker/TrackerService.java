@@ -3,15 +3,11 @@ package com.javier.positiontracker;
 import android.app.IntentService;
 import android.content.Intent;
 import android.location.Location;
-import android.location.LocationManager;
-import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.clients.GoogleClient;
 import com.javier.positiontracker.clients.LocationUpdate;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
-import com.javier.positiontracker.model.FakeLocations;
 import com.javier.positiontracker.model.UserLocation;
 
 /**
@@ -21,7 +17,8 @@ import com.javier.positiontracker.model.UserLocation;
 public class TrackerService extends IntentService
     implements LocationUpdate {
 
-    private static final String TAG = TrackerService.class.getSimpleName();
+    public static final String TAG = TrackerService.class.getSimpleName();
+    public static final String CONNECTION_STATUS = "connection";
 
     private GoogleClient mClient;
     private Location mLastLocation;
@@ -42,6 +39,11 @@ public class TrackerService extends IntentService
     protected void onHandleIntent(Intent intent) {
 
         mClient.connect();
+
+        Intent sendIntent = new Intent();
+        sendIntent.putExtra(CONNECTION_STATUS, "CONNECTED");
+        sendIntent.setAction(TAG);
+        sendBroadcast(sendIntent);
     }
 
     @Override

@@ -1,7 +1,11 @@
 package com.javier.positiontracker;
 
 import android.Manifest;
+import android.app.IntentService;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -10,6 +14,8 @@ import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.os.ResultReceiver;
 import android.support.v7.app.AppCompatActivity;
@@ -17,6 +23,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -55,6 +62,10 @@ public class MainActivity extends AppCompatActivity
 
     private GoogleMap mMap;
     private ArrayList<Marker> mMarkers;
+    private BroadcastReceiver mMessageReceiver;
+
+    @BindView(R.id.coordinatorLayout)
+    CoordinatorLayout mRootLayout;
 
     @BindView(R.id.toolbar)
     Toolbar mBar;
@@ -98,6 +109,25 @@ public class MainActivity extends AppCompatActivity
         SupportMapFragment fragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         fragment.getMapAsync(this);
 
+        mMessageReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+
+                if(intent.getStringExtra(TrackerService.CONNECTION_STATUS).equals("CONNECTED")) {
+
+                    Snackbar
+                        .make(mRootLayout, "CONNECTED", Snackbar.LENGTH_SHORT)
+                        .show();
+                }
+            }
+        };
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(TrackerService.TAG);
+
+        // Register a broadcast receiver instance in order to receive messages from our service
+        registerReceiver(mMessageReceiver, filter);
+
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_CODE);
@@ -129,6 +159,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onPause() {
         super.onPause();
+        unregisterReceiver(mMessageReceiver);
     }
 
     public void showLocations(Date minDate, Date maxDate) {
