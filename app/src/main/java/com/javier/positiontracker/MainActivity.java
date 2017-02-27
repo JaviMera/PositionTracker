@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.location.GnssStatus;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -62,7 +63,28 @@ public class MainActivity extends AppCompatActivity
 
     private GoogleMap mMap;
     private ArrayList<Marker> mMarkers;
-    private BroadcastReceiver mMessageReceiver;
+    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            if(intent.getStringExtra(TrackerService.CONNECTION_STATUS).equals("CONNECTED")) {
+
+                Snackbar
+                    .make(mRootLayout, "CONNECTED", Snackbar.LENGTH_SHORT)
+                    .show();
+            }
+        }
+    };
+
+    private BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            if(intent.getAction().matches("android.location.PROVIDERS_CHANGED")) {
+
+            }
+        }
+    };
 
     @BindView(R.id.coordinatorLayout)
     CoordinatorLayout mRootLayout;
@@ -109,24 +131,14 @@ public class MainActivity extends AppCompatActivity
         SupportMapFragment fragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         fragment.getMapAsync(this);
 
-        mMessageReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-
-                if(intent.getStringExtra(TrackerService.CONNECTION_STATUS).equals("CONNECTED")) {
-
-                    Snackbar
-                        .make(mRootLayout, "CONNECTED", Snackbar.LENGTH_SHORT)
-                        .show();
-                }
-            }
-        };
-
         IntentFilter filter = new IntentFilter();
         filter.addAction(TrackerService.TAG);
 
         // Register a broadcast receiver instance in order to receive messages from our service
         registerReceiver(mMessageReceiver, filter);
+
+        // Listen to changes from GPS provider, when the gps is turned on or offd
+        registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
