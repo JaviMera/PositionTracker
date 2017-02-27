@@ -21,6 +21,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
@@ -30,7 +31,9 @@ import com.javier.positiontracker.model.UserLocation;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -43,17 +46,17 @@ public class MainActivity extends AppCompatActivity
     public static final int FINE_LOCATION_CODE = 100;
 
     private GoogleMap mMap;
-    private ArrayList<Marker> mMarkers;
+    private Map<UserLocation, Marker> mMarkers;
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            if(intent.getStringExtra(TrackerService.CONNECTION_STATUS).equals("CONNECTED")) {
+        if(intent.getStringExtra(TrackerService.CONNECTION_STATUS).equals("CONNECTED")) {
 
-                Snackbar
-                    .make(mRootLayout, "CONNECTED", Snackbar.LENGTH_SHORT)
-                    .show();
-            }
+            Snackbar
+                .make(mRootLayout, "CONNECTED", Snackbar.LENGTH_SHORT)
+                .show();
+        }
         }
     };
 
@@ -61,9 +64,9 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            if(intent.getAction().matches("android.location.PROVIDERS_CHANGED")) {
+        if(intent.getAction().matches("android.location.PROVIDERS_CHANGED")) {
 
-            }
+        }
         }
     };
 
@@ -103,7 +106,7 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mMarkers = new ArrayList<>();
+        mMarkers = new LinkedHashMap<>();
 
         ButterKnife.bind(this);
 
@@ -163,6 +166,25 @@ public class MainActivity extends AppCompatActivity
             maxDate.getTime()
         );
 
+        // Loop through the current locations to see which ones do not match the current filter
+        List<UserLocation> locationsToRemove = new ArrayList<>();
+
+        for(Map.Entry<UserLocation, Marker> entry : mMarkers.entrySet()) {
+
+            if(!locations.contains(entry.getKey())) {
+
+                locationsToRemove.add(entry.getKey());
+            }
+        }
+
+        for(UserLocation location : locationsToRemove) {
+
+            Marker marker = mMarkers.get(location);
+            marker.remove();
+            mMarkers.remove(location);
+        }
+
+        // Loop through the current locations to see which ones match the current filter
         for (UserLocation location : locations) {
 
             MarkerOptions options = new MarkerOptions();
@@ -170,7 +192,7 @@ public class MainActivity extends AppCompatActivity
             options.title(location.toString());
 
             Marker marker = mMap.addMarker(options);
-            mMarkers.add(marker);
+            mMarkers.put(location, marker);
         }
     }
 
@@ -184,9 +206,15 @@ public class MainActivity extends AppCompatActivity
     public void onDateRangeSelected(Date startDate, Date endDate) {
 
         showLocations(startDate, endDate);
+
         if(!mMarkers.isEmpty()) {
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(mMarkers.get(0).getPosition()));
+            Marker firstMarker = mMarkers.entrySet()
+                .iterator()
+                .next()
+                .getValue();
+
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(firstMarker.getPosition()));
         }
     }
 }
