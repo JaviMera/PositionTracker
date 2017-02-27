@@ -1,8 +1,12 @@
 package com.javier.positiontracker;
 
 import android.app.IntentService;
+import android.app.Service;
 import android.content.Intent;
 import android.location.Location;
+import android.os.Binder;
+import android.os.IBinder;
+import android.support.annotation.Nullable;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.clients.GoogleClient;
@@ -14,42 +18,37 @@ import com.javier.positiontracker.model.UserLocation;
  * Created by javie on 2/24/2017.
  */
 
-public class TrackerService extends IntentService
+public class TrackerService extends Service
     implements LocationUpdate {
-
-    public static final String TAG = TrackerService.class.getSimpleName();
-    public static final String CONNECTION_STATUS = "connection";
 
     private GoogleClient mClient;
     private Location mLastLocation;
-
-    public TrackerService() {
-
-        super("TrackerService");
-    }
+    private IBinder mBinder;
 
     @Override
     public void onCreate() {
 
         super.onCreate();
+        mBinder = new ServiceBinder();
         mClient = new GoogleClient(this, this);
-    }
-
-    @Override
-    protected void onHandleIntent(Intent intent) {
-
-        mClient.connect();
-
-        Intent sendIntent = new Intent();
-        sendIntent.putExtra(CONNECTION_STATUS, "CONNECTED");
-        sendIntent.setAction(TAG);
-        sendBroadcast(sendIntent);
     }
 
     @Override
     public void onDestroy() {
 
         mClient.disconnect();
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+
+        return mBinder;
+    }
+
+    public void trackPosition() {
+
+        mClient.connect();
     }
 
     @Override
@@ -76,6 +75,14 @@ public class TrackerService extends IntentService
         // TODO: implement time accumulation in same location
         else {
 
+        }
+    }
+
+    public class ServiceBinder extends Binder {
+
+        TrackerService getService() {
+
+            return TrackerService.this;
         }
     }
 }

@@ -2,11 +2,14 @@ package com.javier.positiontracker;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
@@ -45,18 +48,23 @@ public class MainActivity extends AppCompatActivity
 
     public static final int FINE_LOCATION_CODE = 100;
 
+    private boolean mBound;
     private GoogleMap mMap;
     private Map<UserLocation, Marker> mMarkers;
-    private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
+    private TrackerService mService;
+
+    private ServiceConnection mConnection = new ServiceConnection() {
         @Override
-        public void onReceive(Context context, Intent intent) {
-
-        if(intent.getStringExtra(TrackerService.CONNECTION_STATUS).equals("CONNECTED")) {
-
-            Snackbar
-                .make(mRootLayout, "CONNECTED", Snackbar.LENGTH_SHORT)
-                .show();
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            TrackerService.ServiceBinder binder = (TrackerService.ServiceBinder) iBinder;
+            mService = binder.getService();
+            mService.trackPosition();
+            mBound = true;
         }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+
         }
     };
 
@@ -66,6 +74,7 @@ public class MainActivity extends AppCompatActivity
 
         if(intent.getAction().matches("android.location.PROVIDERS_CHANGED")) {
 
+            mBound = false;
         }
         }
     };
@@ -115,12 +124,6 @@ public class MainActivity extends AppCompatActivity
         SupportMapFragment fragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         fragment.getMapAsync(this);
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(TrackerService.TAG);
-
-        // Register a broadcast receiver instance in order to receive messages from our service
-        registerReceiver(mMessageReceiver, filter);
-
         // Listen to changes from GPS provider, when the gps is turned on or offd
         registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
 
@@ -153,9 +156,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        unregisterReceiver(mMessageReceiver);
+    protected void onResume() {
+
+        super.onResume();
+        Intent intent = new Intent(this, TrackerService.class);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     public void showLocations(Date minDate, Date maxDate) {
