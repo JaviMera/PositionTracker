@@ -6,7 +6,6 @@ import android.support.test.runner.AndroidJUnit4;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
-import com.javier.positiontracker.exceptions.ExistingLocationException;
 import com.javier.positiontracker.model.UserLocation;
 
 import junit.framework.Assert;
