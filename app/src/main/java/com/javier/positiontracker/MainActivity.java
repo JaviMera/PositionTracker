@@ -13,13 +13,13 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -30,6 +30,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.dialogs.DateRangeListener;
 import com.javier.positiontracker.dialogs.DialogDateRange;
+import com.javier.positiontracker.dialogs.DialogNotification;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.util.ArrayList;
@@ -42,9 +43,10 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity
-        implements
-        OnMapReadyCallback,
-        DateRangeListener{
+    implements
+    OnMapReadyCallback,
+    DateRangeListener,
+    DialogNotification.OnNotificationCallback {
 
     public static final int FINE_LOCATION_CODE = 100;
 
@@ -109,12 +111,20 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
+        DialogFragment dialog;
+
         switch(item.getItemId()) {
 
             case R.id.action_date_range:
 
-                DialogDateRange dialog = new DialogDateRange();
+                dialog = new DialogDateRange();
                 dialog.show(getSupportFragmentManager(), "dialog_date_range");
+                break;
+
+            case R.id.action_notification:
+
+                dialog = new DialogNotification();
+                dialog.show(getSupportFragmentManager(), "dialog_notification");
                 break;
 
             default:
@@ -243,5 +253,11 @@ public class MainActivity extends AppCompatActivity
 
             mMap.moveCamera(CameraUpdateFactory.newLatLng(firstMarker.getPosition()));
         }
+    }
+
+    @Override
+    public void onSetNotification(int time) {
+
+        mService.trackTime(time);
     }
 }

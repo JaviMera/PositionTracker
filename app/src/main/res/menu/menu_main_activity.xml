@@ -5,9 +5,14 @@
     <item
         android:id="@+id/action_date_range"
         android:title="Date Range"
-        app:showAsAction="always"
+        app:showAsAction="ifRoom"
         android:icon="@mipmap/date_range"
-        android:orderInCategory="100">
+        android:orderInCategory="100" />
 
-    </item>
+    <item
+        android:id="@+id/action_notification"
+        android:title="Add Notification"
+        app:showAsAction="ifRoom"
+        android:icon="@mipmap/ic_alarm"
+        android:orderInCategory="101"/>
 </menu>

@@ -89,6 +89,10 @@ public class TrackerService extends Service
         }
     }
 
+    public void trackTime(int time) {
+
+    }
+
     public class ServiceBinder extends Binder {
 
         TrackerService getService() {
