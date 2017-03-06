@@ -1,5 +1,8 @@
 package com.javier.positiontracker.model;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Objects;
@@ -7,7 +10,7 @@ import java.util.Objects;
 /**
  * Created by javie on 2/17/2017.
  */
-public class UserLocation {
+public class UserLocation implements Parcelable{
 
     private LatLng mLatLong;
     private long mDate;
@@ -18,7 +21,24 @@ public class UserLocation {
         mDate = date;
     }
 
-    public LatLng getLatLong() {
+    private UserLocation(Parcel in) {
+        mLatLong = in.readParcelable(LatLng.class.getClassLoader());
+        mDate = in.readLong();
+    }
+
+    public static final Creator<UserLocation> CREATOR = new Creator<UserLocation>() {
+        @Override
+        public UserLocation createFromParcel(Parcel in) {
+            return new UserLocation(in);
+        }
+
+        @Override
+        public UserLocation[] newArray(int size) {
+            return new UserLocation[size];
+        }
+    };
+
+    public LatLng getPosition() {
         return mLatLong;
     }
 
@@ -48,6 +68,18 @@ public class UserLocation {
         }
 
         UserLocation otherLocation = (UserLocation)obj;
-        return mLatLong.equals(otherLocation.getLatLong());
+        return mLatLong.equals(otherLocation.getPosition());
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+
+        parcel.writeParcelable(mLatLong, i);
+        parcel.writeLong(mDate);
     }
 }

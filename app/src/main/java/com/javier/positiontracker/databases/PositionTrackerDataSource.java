@@ -31,8 +31,8 @@ public class PositionTrackerDataSource {
         mDb.beginTransaction();
 
         ContentValues values = new ContentValues();
-        values.put(PositionTrackerSQLiteHelper.LOCATION_LAT, location.getLatLong().latitude);
-        values.put(PositionTrackerSQLiteHelper.LOCATION_LONG, location.getLatLong().longitude);
+        values.put(PositionTrackerSQLiteHelper.LOCATION_LAT, location.getPosition().latitude);
+        values.put(PositionTrackerSQLiteHelper.LOCATION_LONG, location.getPosition().longitude);
         values.put(PositionTrackerSQLiteHelper.LOCATION_DATE, location.getDate());
 
         long rowId = mDb.insert(
@@ -140,8 +140,8 @@ public class PositionTrackerDataSource {
         mDb = mHelper.getReadableDatabase();
         mDb.beginTransaction();
 
-        double latitude = location.getLatLong().latitude;
-        double longitude = location.getLatLong().longitude;
+        double latitude = location.getPosition().latitude;
+        double longitude = location.getPosition().longitude;
 
         Cursor cursor = mDb.query(
                 PositionTrackerSQLiteHelper.LOCATION_TABLE,

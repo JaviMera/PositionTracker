@@ -1,9 +1,6 @@
 package com.javier.positiontracker.test;
 
-import android.location.Location;
-
 import com.google.android.gms.maps.model.LatLng;
-import com.javier.positiontracker.model.FakeLocations;
 import com.javier.positiontracker.model.UserLocation;
 
 import junit.framework.Assert;
@@ -11,8 +8,6 @@ import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Date;
@@ -43,8 +38,8 @@ public class UserLocationTest {
     public void getLatLong() throws Exception {
 
         // Assert
-        Assert.assertEquals(mLatLong.latitude, mTarget.getLatLong().latitude);
-        Assert.assertEquals(mLatLong.longitude, mTarget.getLatLong().longitude);
+        Assert.assertEquals(mLatLong.latitude, mTarget.getPosition().latitude);
+        Assert.assertEquals(mLatLong.longitude, mTarget.getPosition().longitude);
     }
 
     @Test

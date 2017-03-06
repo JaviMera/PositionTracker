@@ -23,9 +23,10 @@ public class TrackerService extends Service
     implements LocationUpdate {
 
     public static final String LOCATION_CHANGE = TrackerService.class.getSimpleName() + ".NEW_LOCATION";
+    public static final String LOCATION_CHANGE_KEY = "new_location";
 
     private GoogleClient mClient;
-    private Location mLastLocation;
+    private UserLocation mLastLocation;
     private IBinder mBinder;
     private LocalBroadcastManager mBroadcast;
 
@@ -59,27 +60,26 @@ public class TrackerService extends Service
     @Override
     public void onNewLocation(Location location) {
 
-        // If it's a new location, proceed to storing it in the database
-        if(mLastLocation != location) {
+        UserLocation newLocation = new UserLocation(
+            new LatLng(location.getLatitude(), location.getLongitude()),
+            location.getTime());
 
-            mLastLocation = location;
+        // If it's a new location, proceed to storing it in the database
+        if(mLastLocation != newLocation) {
+
+            mLastLocation = newLocation;
 
             PositionTrackerDataSource source = new PositionTrackerDataSource(this);
 
-            UserLocation userLocation = new UserLocation(
-                new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()),
-                mLastLocation.getTime()
-            );
-
             // Check if the location already exists in the database
-            if(!source.hasLocation(userLocation)) {
+            if(!source.hasLocation(mLastLocation)) {
 
-                source.insertUserLocation(userLocation);
+                source.insertUserLocation(mLastLocation);
             }
 
             // Notify the activity about a location change
             Intent intent = new Intent(LOCATION_CHANGE);
-            intent.putExtra("new_location", mLastLocation);
+            intent.putExtra(LOCATION_CHANGE_KEY, mLastLocation);
 
             mBroadcast.sendBroadcast(intent);
         }

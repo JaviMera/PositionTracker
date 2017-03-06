@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
@@ -20,12 +19,12 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
@@ -82,13 +81,20 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            Location location = intent.getParcelableExtra("new_location");
+            UserLocation location = intent.getParcelableExtra(TrackerService.LOCATION_CHANGE_KEY);
+
+            // Check if a marker is showing on the map
+            if(mCurrentMarker != null) {
+
+                mCurrentMarker.setVisible(false);
+                mCurrentMarker.remove();
+            }
+
             MarkerOptions options = new MarkerOptions();
-            options.position(new LatLng(location.getLatitude(), location.getLongitude()));
+            options.position(location.getPosition());
             options.title("Current Location");
 
             mCurrentMarker = mMap.addMarker(options);
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentMarker.getPosition()));
         }
     };
 
@@ -209,7 +215,7 @@ public class MainActivity extends AppCompatActivity
         for (UserLocation location : locations) {
 
             MarkerOptions options = new MarkerOptions();
-            options.position(location.getLatLong());
+            options.position(location.getPosition());
             options.title(location.toString());
 
             Marker marker = mMap.addMarker(options);

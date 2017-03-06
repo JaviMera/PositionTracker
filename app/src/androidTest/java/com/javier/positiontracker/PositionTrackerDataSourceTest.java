@@ -73,8 +73,8 @@ public class PositionTrackerDataSourceTest {
 
         // Act
         long rowId = mTarget.insertUserLocationTime(
-            location.getLatLong().latitude,
-            location.getLatLong().longitude
+            location.getPosition().latitude,
+            location.getPosition().longitude
         );
 
         // Assert
