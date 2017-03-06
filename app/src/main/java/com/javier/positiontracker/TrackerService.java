@@ -7,6 +7,7 @@ import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.clients.GoogleClient;
@@ -21,9 +22,12 @@ import com.javier.positiontracker.model.UserLocation;
 public class TrackerService extends Service
     implements LocationUpdate {
 
+    public static final String LOCATION_CHANGE = TrackerService.class.getSimpleName() + ".NEW_LOCATION";
+
     private GoogleClient mClient;
     private Location mLastLocation;
     private IBinder mBinder;
+    private LocalBroadcastManager mBroadcast;
 
     @Override
     public void onCreate() {
@@ -31,6 +35,7 @@ public class TrackerService extends Service
         super.onCreate();
         mBinder = new ServiceBinder();
         mClient = new GoogleClient(this, this);
+        mBroadcast = LocalBroadcastManager.getInstance(this);
     }
 
     @Override
@@ -62,15 +67,21 @@ public class TrackerService extends Service
             PositionTrackerDataSource source = new PositionTrackerDataSource(this);
 
             UserLocation userLocation = new UserLocation(
-                new LatLng(location.getLatitude(), location.getLongitude()),
-                location.getTime()
+                new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude()),
+                mLastLocation.getTime()
             );
 
             // Check if the location already exists in the database
-            if(source.hasLocation(userLocation))
-                return;
+            if(!source.hasLocation(userLocation)) {
 
-            source.insertUserLocation(userLocation);
+                source.insertUserLocation(userLocation);
+            }
+
+            // Notify the activity about a location change
+            Intent intent = new Intent(LOCATION_CHANGE);
+            intent.putExtra("new_location", mLastLocation);
+
+            mBroadcast.sendBroadcast(intent);
         }
         // TODO: implement time accumulation in same location
         else {

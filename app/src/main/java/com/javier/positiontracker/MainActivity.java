@@ -8,12 +8,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -68,22 +69,28 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    private BroadcastReceiver gpsReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-
-        if(intent.getAction().matches("android.location.PROVIDERS_CHANGED")) {
-
-            mBound = false;
-        }
-        }
-    };
-
     @BindView(R.id.coordinatorLayout)
     CoordinatorLayout mRootLayout;
 
     @BindView(R.id.toolbar)
     Toolbar mBar;
+
+    private Marker mCurrentMarker;
+
+    private BroadcastReceiver mNewLocationReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            Location location = intent.getParcelableExtra("new_location");
+            MarkerOptions options = new MarkerOptions();
+            options.position(new LatLng(location.getLatitude(), location.getLongitude()));
+            options.title("Current Location");
+
+            mCurrentMarker = mMap.addMarker(options);
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentMarker.getPosition()));
+        }
+    };
 
     @Override
     public boolean onCreatePanelMenu(int featureId, Menu menu) {
@@ -124,9 +131,6 @@ public class MainActivity extends AppCompatActivity
         SupportMapFragment fragment = (SupportMapFragment)getSupportFragmentManager().findFragmentById(R.id.map);
         fragment.getMapAsync(this);
 
-        // Listen to changes from GPS provider, when the gps is turned on or offd
-        registerReceiver(gpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
-
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_CODE);
@@ -159,8 +163,20 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
 
         super.onResume();
+
+        // Bind to TrackerService to store the location of the device periodically
         Intent intent = new Intent(this, TrackerService.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+
+        // Register a receiver to listen to location updates from the service
+        LocalBroadcastManager.getInstance(this).registerReceiver(mNewLocationReceiver, new IntentFilter(TrackerService.LOCATION_CHANGE));
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewLocationReceiver);
     }
 
     public void showLocations(Date minDate, Date maxDate) {
