@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.javier.positiontracker.MainActivity;
 import com.javier.positiontracker.R;
@@ -52,6 +53,8 @@ public class DialogNotification extends DialogFragment{
 
         ButterKnife.bind(this, view);
 
+        mTimeTextView.setText("0");
+
         mSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
             @Override
@@ -79,6 +82,12 @@ public class DialogNotification extends DialogFragment{
     @OnClick(R.id.setNotification)
     public void onSetNotificationClick(View view) {
 
+        int minutes = mSeekBar.getProgress();
 
+        // Send the minutes selected to Main Activity
+        mListener.onSetNotification(minutes);
+
+        // Dismiss dialog when the user taps on OK
+        dismiss();
     }
 }

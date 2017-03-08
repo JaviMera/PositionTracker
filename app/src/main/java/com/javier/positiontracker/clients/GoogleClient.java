@@ -25,6 +25,8 @@ public class GoogleClient implements
     GoogleApiClient.OnConnectionFailedListener,
     LocationListener {
 
+    private final long mInterval = 10000L;
+
     @Override
     public void onLocationChanged(Location location) {
 
@@ -45,7 +47,7 @@ public class GoogleClient implements
 
         mRequest = LocationRequest.create()
             .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
-            .setInterval(10000L)
+            .setInterval(mInterval)
             .setFastestInterval(1000L);
 
         mParent = (TrackerService) listener;
@@ -85,5 +87,10 @@ public class GoogleClient implements
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleClient, this);
             mGoogleClient.disconnect();
         }
+    }
+
+    public long getTimeInterval() {
+
+        return mInterval;
     }
 }

@@ -203,9 +203,9 @@ public class MainActivity extends AppCompatActivity
             maxDate.getTime()
         );
 
-        // Loop through the current locations to see which ones do not match the current filter
         List<UserLocation> locationsToRemove = new ArrayList<>();
 
+        // Loop through the current locations to see which ones do not match the current filter
         for(Map.Entry<UserLocation, Marker> entry : mMarkers.entrySet()) {
 
             if(!locations.contains(entry.getKey())) {
