@@ -1,6 +1,5 @@
 package com.javier.positiontracker;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
@@ -14,6 +13,10 @@ import android.support.v4.content.LocalBroadcastManager;
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.clients.GoogleClient;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
+import com.javier.positiontracker.location.LocationBroadcast;
+import com.javier.positiontracker.location.LocationCounter;
+import com.javier.positiontracker.location.LocationNotification;
+import com.javier.positiontracker.location.LocationThreshold;
 import com.javier.positiontracker.model.UserLocation;
 
 /**

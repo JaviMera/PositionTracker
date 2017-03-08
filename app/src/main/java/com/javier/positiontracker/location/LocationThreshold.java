@@ -1,4 +1,4 @@
-package com.javier.positiontracker;
+package com.javier.positiontracker.location;
 
 /**
  * Created by javie on 3/8/2017.

@@ -1,5 +1,7 @@
 package com.javier.positiontracker;
 
+import com.javier.positiontracker.location.LocationThreshold;
+
 import junit.framework.Assert;
 
 import org.junit.Before;

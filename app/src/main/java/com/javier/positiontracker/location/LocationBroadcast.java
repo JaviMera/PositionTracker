@@ -1,4 +1,4 @@
-package com.javier.positiontracker;
+package com.javier.positiontracker.location;
 
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
