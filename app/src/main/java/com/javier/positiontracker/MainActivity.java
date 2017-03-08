@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            UserLocation location = intent.getParcelableExtra(TrackerService.LOCATION_CHANGE_KEY);
+            UserLocation location = intent.getParcelableExtra(LocationBroadcast.LOCATION_CHANGE_KEY);
 
             // Check if a marker is showing on the map
             if(mCurrentMarker != null) {
@@ -185,7 +185,11 @@ public class MainActivity extends AppCompatActivity
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
         // Register a receiver to listen to location updates from the service
-        LocalBroadcastManager.getInstance(this).registerReceiver(mNewLocationReceiver, new IntentFilter(TrackerService.LOCATION_CHANGE));
+        LocalBroadcastManager.getInstance(this)
+            .registerReceiver(
+                mNewLocationReceiver,
+                new IntentFilter(LocationBroadcast.LOCATION_CHANGE)
+            );
     }
 
     @Override

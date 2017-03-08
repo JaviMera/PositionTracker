@@ -1,23 +1,18 @@
 package com.javier.positiontracker;
 
-import android.app.AlarmManager;
-import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.clients.GoogleClient;
-import com.javier.positiontracker.clients.LocationUpdate;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.model.UserLocation;
 
@@ -26,19 +21,15 @@ import com.javier.positiontracker.model.UserLocation;
  */
 
 public class TrackerService extends Service
-    implements LocationUpdate {
-
-    public static final String LOCATION_CHANGE = TrackerService.class.getSimpleName() + ".NEW_LOCATION";
-    public static final String LOCATION_CHANGE_KEY = "new_location";
-    public static final int NOTIFICATION_REQUEST_CODE = 11;
+    implements com.javier.positiontracker.clients.LocationUpdate {
 
     private GoogleClient mClient;
     private UserLocation mLastLocation;
     private IBinder mBinder;
-    private LocalBroadcastManager mBroadcast;
-    private long mTimeNotification;
-    private long mTimeCounter;
-    private NotificationManager mNotificationManager;
+    private LocationBroadcast mLocationBroadcast;
+    private LocationThreshold mLocationThreshold;
+    private LocationCounter mLocationCounter;
+    private LocationNotification mLocationNotification;
 
     @Override
     public void onCreate() {
@@ -46,10 +37,15 @@ public class TrackerService extends Service
         super.onCreate();
         mBinder = new ServiceBinder();
         mClient = new GoogleClient(this, this);
-        mBroadcast = LocalBroadcastManager.getInstance(this);
-        mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        setTimeNotification(0L);
-        setTimeCounter(0L);
+        mLocationBroadcast = new LocationBroadcast(LocalBroadcastManager.getInstance(this));
+
+        mLocationNotification = new LocationNotification(
+            this,
+            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)
+        );
+
+        mLocationThreshold = new LocationThreshold();
+        mLocationCounter = new LocationCounter();
     }
 
     @Override
@@ -81,11 +77,7 @@ public class TrackerService extends Service
         if(mLastLocation == null || !mLastLocation.equals(newLocation)) {
 
             mLastLocation = newLocation;
-
-            // Reset bot time notificaion and counter if the location changes
-            // since we wan't to start tracking time again for a new location
-            setTimeNotification(0L);
-            setTimeCounter(0L);
+            mLocationCounter.reset();
 
             PositionTrackerDataSource source = new PositionTrackerDataSource(this);
 
@@ -96,66 +88,35 @@ public class TrackerService extends Service
             }
 
             // Notify the activity about a location change
-            Intent intent = new Intent(LOCATION_CHANGE);
-            intent.putExtra(LOCATION_CHANGE_KEY, mLastLocation);
-
-            mBroadcast.sendBroadcast(intent);
+            mLocationBroadcast.send(mLastLocation);
         }
         // TODO: implement time accumulation in same location
         else {
 
-            if(mTimeNotification > 0) {
+            if(mLocationThreshold.hasValidThreshold()) {
 
-                if(mTimeCounter >= mTimeNotification) {
+                if(mLocationCounter.getCounter() >= mLocationThreshold.getThreshold()) {
 
-                    Notification notification = createNotification();
-                    mNotificationManager.notify(NOTIFICATION_REQUEST_CODE, notification);
+                    mLocationNotification.send(
+                        "Position Tracker",
+                        "It's been " + mLocationThreshold.getThreshold() / 1000 / 60 + " minute(s).",
+                        R.mipmap.ic_launcher);
 
-                    setTimeNotification(0L);
-                    setTimeCounter(0L);
+                    mLocationThreshold.reset();
+                    mLocationCounter.reset();
                 }
                 else {
 
-                    mTimeCounter += mClient.getTimeInterval();
+                    mLocationCounter.increment(mClient.getTimeInterval());
                 }
             }
         }
     }
 
-    private Notification createNotification() {
-
-        // Begin creating a notification
-        Notification.Builder notificationBuilder = new Notification.Builder(this);
-
-        // Set the icon that will be displayed on the left of the notification
-        notificationBuilder.setSmallIcon(R.mipmap.ic_launcher);
-
-        // Set the title of the message
-        notificationBuilder.setContentTitle("Position Tracker");
-
-        // Set the body of the message
-        notificationBuilder.setContentText(
-            "It's been " +
-            mTimeNotification / 1000 / 60 +
-            " minute(s).");
-
-        // Set the notification to vibrate
-        notificationBuilder.setDefaults(Notification.DEFAULT_VIBRATE);
-
-        // PRIORITY_HIGH will make notification show as a heads-up Notification
-        // instead of just displaying the icon at the top of the device.
-        notificationBuilder.setPriority(Notification.PRIORITY_HIGH);
-
-        return notificationBuilder.build();
-    }
-
     public void trackTime(int time) {
 
         // Store the time notifications in milliseconds
-        setTimeNotification(time * 60 * 1000);
-
-        // Set the time counter to begin counting the seconds at the current location
-        setTimeCounter(0L);
+        mLocationThreshold.setThreshold(time * 60 * 1000);
     }
 
     public class ServiceBinder extends Binder {
@@ -164,15 +125,5 @@ public class TrackerService extends Service
 
             return TrackerService.this;
         }
-    }
-
-    private void setTimeNotification(long time) {
-
-        mTimeNotification = time;
-    }
-
-    private void setTimeCounter(long time) {
-
-        mTimeCounter = time;
     }
 }

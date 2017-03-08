@@ -1,4 +1,4 @@
-package com.javier.positiontracker.test;
+package com.javier.positiontracker;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.model.UserLocation;
