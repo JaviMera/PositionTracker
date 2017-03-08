@@ -90,18 +90,22 @@ public class MainActivity extends AppCompatActivity
 
             UserLocation location = intent.getParcelableExtra(LocationBroadcast.LOCATION_CHANGE_KEY);
 
-            // Check if a marker is showing on the map
-            if(mCurrentMarker != null) {
+            // Check if the incoming intent contains a valid new location
+            if(location != null) {
 
-                mCurrentMarker.setVisible(false);
-                mCurrentMarker.remove();
+                // Check if a marker is showing on the map
+                if(mCurrentMarker != null) {
+
+                    mCurrentMarker.setVisible(false);
+                    mCurrentMarker.remove();
+                }
+
+                MarkerOptions options = new MarkerOptions();
+                options.position(location.getPosition());
+                options.title("Current Location");
+
+                mCurrentMarker = mMap.addMarker(options);
             }
-
-            MarkerOptions options = new MarkerOptions();
-            options.position(location.getPosition());
-            options.title("Current Location");
-
-            mCurrentMarker = mMap.addMarker(options);
         }
     };
 
