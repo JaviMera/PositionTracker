@@ -11,12 +11,16 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.SpannableStringBuilder;
+import android.text.style.ImageSpan;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -264,5 +268,12 @@ public class MainActivity extends AppCompatActivity
     public void onSetNotification(int time) {
 
         mService.trackTime(time);
+
+        Snackbar
+            .make(
+                mRootLayout,
+                "Notification Created!",
+                Snackbar.LENGTH_SHORT)
+            .show();
     }
 }

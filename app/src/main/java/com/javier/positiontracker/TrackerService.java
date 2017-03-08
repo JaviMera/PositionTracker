@@ -100,11 +100,14 @@ public class TrackerService extends Service
 
                 if(mLocationCounter.getCounter() >= mLocationThreshold.getThreshold()) {
 
+                    // Send a notification to the user when they've reached their time limit
+                    // at the same location
                     mLocationNotification.send(
                         "Position Tracker",
                         "It's been " + mLocationThreshold.getThreshold() / 1000 / 60 + " minute(s).",
                         R.mipmap.ic_launcher);
 
+                    // Reset both threshold and counter since the user has reached the time limit
                     mLocationThreshold.reset();
                     mLocationCounter.reset();
                 }
@@ -120,6 +123,9 @@ public class TrackerService extends Service
 
         // Store the time notifications in milliseconds
         mLocationThreshold.setThreshold(time * 60 * 1000);
+
+        // Reset the counter everytime there is a new time threshold set by the user
+        mLocationCounter.reset();
     }
 
     public class ServiceBinder extends Binder {
