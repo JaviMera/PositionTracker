@@ -13,9 +13,11 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -24,11 +26,15 @@ import android.text.style.ImageSpan;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Toast;
 
+import com.google.android.gms.common.stats.ConnectionEvent;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
@@ -46,6 +52,7 @@ import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class MainActivity extends AppCompatActivity
     implements
@@ -54,6 +61,9 @@ public class MainActivity extends AppCompatActivity
     DialogNotification.OnNotificationCallback {
 
     public static final int FINE_LOCATION_CODE = 100;
+
+    private final static float ZOOM_LEVEL_STREET = 15.0f;
+    private static final float ZOOM_LEVEL_WORLD = 1.0F;
 
     private boolean mBound;
     private GoogleMap mMap;
@@ -81,6 +91,9 @@ public class MainActivity extends AppCompatActivity
     @BindView(R.id.toolbar)
     Toolbar mBar;
 
+    @BindView(R.id.locationFab)
+    FloatingActionButton mLocationFab;
+
     private Marker mCurrentMarker;
 
     private BroadcastReceiver mNewLocationReceiver = new BroadcastReceiver() {
@@ -88,24 +101,26 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            UserLocation location = intent.getParcelableExtra(LocationBroadcast.LOCATION_CHANGE_KEY);
+        UserLocation location = intent.getParcelableExtra(LocationBroadcast.LOCATION_CHANGE_KEY);
 
-            // Check if the incoming intent contains a valid new location
-            if(location != null) {
+        // Check if the incoming intent contains a valid new location
+        if(location != null) {
 
-                // Check if a marker is showing on the map
-                if(mCurrentMarker != null) {
+            // Check if a marker is showing on the map
+            if(mCurrentMarker != null) {
 
-                    mCurrentMarker.setVisible(false);
-                    mCurrentMarker.remove();
-                }
-
-                MarkerOptions options = new MarkerOptions();
-                options.position(location.getPosition());
-                options.title("Current Location");
-
-                mCurrentMarker = mMap.addMarker(options);
+                mCurrentMarker.setVisible(false);
+                mCurrentMarker.remove();
             }
+
+            MarkerOptions options = new MarkerOptions();
+            options.position(location.getPosition());
+            options.title("Current Location");
+
+            mCurrentMarker = mMap.addMarker(options);
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentMarker.getPosition()));
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL_STREET), 2000, null);
+        }
         }
     };
 
@@ -147,6 +162,7 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         mMarkers = new LinkedHashMap<>();
 
         ButterKnife.bind(this);
@@ -279,5 +295,12 @@ public class MainActivity extends AppCompatActivity
                 "Notification Created!",
                 Snackbar.LENGTH_SHORT)
             .show();
+    }
+
+    @OnClick(R.id.locationFab)
+    public void onLocationFabClick(View view) {
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentMarker.getPosition()));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL_STREET), 2000, null);
     }
 }
