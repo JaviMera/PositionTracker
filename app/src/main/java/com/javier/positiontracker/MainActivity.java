@@ -63,9 +63,7 @@ public class MainActivity extends AppCompatActivity
     public static final int FINE_LOCATION_CODE = 100;
 
     private final static float ZOOM_LEVEL_STREET = 15.0f;
-    private static final float ZOOM_LEVEL_WORLD = 1.0F;
 
-    private boolean mBound;
     private GoogleMap mMap;
     private Map<UserLocation, Marker> mMarkers;
     private TrackerService mService;
@@ -76,7 +74,6 @@ public class MainActivity extends AppCompatActivity
             TrackerService.ServiceBinder binder = (TrackerService.ServiceBinder) iBinder;
             mService = binder.getService();
             mService.trackPosition();
-            mBound = true;
         }
 
         @Override
@@ -194,16 +191,16 @@ public class MainActivity extends AppCompatActivity
                     }
 
                     Intent intent = new Intent(MainActivity.this, TrackerService.class);
-                    startService(intent);
+                    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
                 }
                 break;
         }
     }
 
     @Override
-    protected void onResume() {
+    protected void onStart() {
 
-        super.onResume();
+        super.onStart();
 
         // Bind to TrackerService to store the location of the device periodically
         Intent intent = new Intent(this, TrackerService.class);
@@ -300,7 +297,16 @@ public class MainActivity extends AppCompatActivity
     @OnClick(R.id.locationFab)
     public void onLocationFabClick(View view) {
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentMarker.getPosition()));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL_STREET), 2000, null);
+        // Before moving and zooming in the current marker, check current marker is a valid marker
+        if(mCurrentMarker != null) {
+
+            // Center the camera to the current marker position, which is the current device's
+            // location in the map
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentMarker.getPosition()));
+
+            // Zoom in the current marker with stree level, an animation delay of 2 seconds, and
+            // without registering a cancel callback
+            mMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL_STREET), 2000, null);
+        }
     }
 }
