@@ -7,8 +7,11 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.clients.GoogleClient;
@@ -37,7 +40,7 @@ public class TrackerService extends Service
     @Override
     public void onCreate() {
 
-        super.onCreate();
+        Toast.makeText(this, "on create", Toast.LENGTH_SHORT).show();
         mBinder = new ServiceBinder();
         mClient = new GoogleClient(this, this);
         mLocationBroadcast = new LocationBroadcast(LocalBroadcastManager.getInstance(this));
@@ -51,16 +54,25 @@ public class TrackerService extends Service
         mLocationCounter = new LocationCounter();
     }
 
+//    @Override
+//    public int onStartCommand(Intent intent, int flags, int startId) {
+//
+//        Toast.makeText(this, "on start command", Toast.LENGTH_SHORT).show();
+//        return START_STICKY;
+//    }
+
     @Override
     public void onDestroy() {
 
         mClient.disconnect();
+        Toast.makeText(this, "destroying", Toast.LENGTH_SHORT).show();
     }
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
 
+        Toast.makeText(this, "on bind", Toast.LENGTH_SHORT).show();
         return mBinder;
     }
 

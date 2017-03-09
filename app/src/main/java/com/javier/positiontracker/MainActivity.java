@@ -67,6 +67,7 @@ public class MainActivity extends AppCompatActivity
     private GoogleMap mMap;
     private Map<UserLocation, Marker> mMarkers;
     private TrackerService mService;
+    private boolean mBound;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -74,11 +75,13 @@ public class MainActivity extends AppCompatActivity
             TrackerService.ServiceBinder binder = (TrackerService.ServiceBinder) iBinder;
             mService = binder.getService();
             mService.trackPosition();
+            mBound = true;
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
 
+            mBound = false;
         }
     };
 
@@ -175,7 +178,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         Intent intent = new Intent(MainActivity.this, TrackerService.class);
-        startService(intent);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
@@ -191,6 +194,7 @@ public class MainActivity extends AppCompatActivity
                     }
 
                     Intent intent = new Intent(MainActivity.this, TrackerService.class);
+                    startService(intent);
                     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
                 }
                 break;
@@ -219,6 +223,11 @@ public class MainActivity extends AppCompatActivity
         super.onStop();
 
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewLocationReceiver);
+
+        if(mBound) {
+
+            unbindService(mConnection);
+        }
     }
 
     public void showLocations(Date minDate, Date maxDate) {
