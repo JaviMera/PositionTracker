@@ -74,7 +74,6 @@ public class MainActivity extends AppCompatActivity
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             TrackerService.ServiceBinder binder = (TrackerService.ServiceBinder) iBinder;
             mService = binder.getService();
-            mService.trackPosition();
             mBound = true;
         }
 
@@ -176,9 +175,6 @@ public class MainActivity extends AppCompatActivity
 
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_CODE);
         }
-
-        Intent intent = new Intent(MainActivity.this, TrackerService.class);
-        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
     }
 
     @Override

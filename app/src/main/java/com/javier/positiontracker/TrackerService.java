@@ -29,6 +29,8 @@ import com.javier.positiontracker.model.UserLocation;
 public class TrackerService extends Service
     implements com.javier.positiontracker.clients.LocationUpdate {
 
+    public static final String TAG = TrackerService.class.getSimpleName();
+
     private GoogleClient mClient;
     private UserLocation mLastLocation;
     private IBinder mBinder;
@@ -40,7 +42,6 @@ public class TrackerService extends Service
     @Override
     public void onCreate() {
 
-        Toast.makeText(this, "on create", Toast.LENGTH_SHORT).show();
         mBinder = new ServiceBinder();
         mClient = new GoogleClient(this, this);
         mLocationBroadcast = new LocationBroadcast(LocalBroadcastManager.getInstance(this));
@@ -57,28 +58,15 @@ public class TrackerService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        Toast.makeText(this, "on start command", Toast.LENGTH_SHORT).show();
         return START_STICKY;
-    }
-
-    @Override
-    public void onDestroy() {
-
-        mClient.disconnect();
-        Toast.makeText(this, "destroying", Toast.LENGTH_SHORT).show();
     }
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
 
-        Toast.makeText(this, "on bind", Toast.LENGTH_SHORT).show();
-        return mBinder;
-    }
-
-    public void trackPosition() {
-
         mClient.connect();
+        return mBinder;
     }
 
     @Override
