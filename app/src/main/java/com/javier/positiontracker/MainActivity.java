@@ -1,6 +1,8 @@
 package com.javier.positiontracker;
 
 import android.Manifest;
+import android.app.ActivityManager;
+import android.app.Notification;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -23,6 +25,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.SpannableStringBuilder;
 import android.text.style.ImageSpan;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -74,6 +77,7 @@ public class MainActivity extends AppCompatActivity
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             TrackerService.ServiceBinder binder = (TrackerService.ServiceBinder) iBinder;
             mService = binder.getService();
+            mService.startTracking();
             mBound = true;
         }
 
@@ -178,32 +182,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-
-        switch (requestCode) {
-
-            case FINE_LOCATION_CODE:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        return;
-                    }
-
-                    Intent intent = new Intent(MainActivity.this, TrackerService.class);
-                    startService(intent);
-                    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
-                }
-                break;
-        }
-    }
-
-    @Override
     protected void onStart() {
 
         super.onStart();
 
-        // Bind to TrackerService to store the location of the device periodically
         Intent intent = new Intent(this, TrackerService.class);
+
+        // Bind to TrackerService to store the location of the device periodically
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
         // Register a receiver to listen to location updates from the service
@@ -222,7 +207,28 @@ public class MainActivity extends AppCompatActivity
 
         if(mBound) {
 
+            mBound = false;
             unbindService(mConnection);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+
+        switch (requestCode) {
+
+            case FINE_LOCATION_CODE:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        return;
+                    }
+
+                    Intent intent = new Intent(MainActivity.this, TrackerService.class);
+                    startService(intent);
+                    bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+                }
+                break;
         }
     }
 

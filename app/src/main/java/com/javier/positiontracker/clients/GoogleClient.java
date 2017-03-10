@@ -93,4 +93,9 @@ public class GoogleClient implements
 
         return mInterval;
     }
+
+    public boolean isConnected() {
+
+        return mGoogleClient.isConnected();
+    }
 }

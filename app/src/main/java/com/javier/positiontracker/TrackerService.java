@@ -1,5 +1,6 @@
 package com.javier.positiontracker;
 
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
@@ -9,6 +10,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationBuilderWithBuilderAccessor;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -58,6 +60,11 @@ public class TrackerService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
+        // Begin tracking location when the service is first started
+        startTracking();
+
+        // By returning START_STICKY we explicitly tell the Android os that the service should be
+        // restarted when the last client unbinds from it.
         return START_STICKY;
     }
 
@@ -65,8 +72,25 @@ public class TrackerService extends Service
     @Override
     public IBinder onBind(Intent intent) {
 
-        mClient.connect();
         return mBinder;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    public void startTracking() {
+
+        if(!mClient.isConnected()) {
+
+            mClient.connect();
+        }
+    }
+
+    public void stopTracking() {
+
+        mClient.disconnect();
     }
 
     @Override
