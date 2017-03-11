@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -206,6 +207,16 @@ public class MainActivity extends AppCompatActivity
             mNotificationActive = true;
             invalidateOptionsMenu();
         }
+        else {
+
+            SharedPreferences prefs = getSharedPreferences(MainActivity.class.getSimpleName() + ".PREFERENCES_KEY", MODE_PRIVATE);
+            if(prefs.contains("time")) {
+
+                mTimeLimit = prefs.getInt("time", 0);
+                mNotificationActive = mTimeLimit != 0;
+                invalidateOptionsMenu();
+            }
+        }
 
         ButterKnife.bind(this);
 
@@ -256,15 +267,24 @@ public class MainActivity extends AppCompatActivity
             mBound = false;
             unbindService(mConnection);
         }
-
-        Log.d("MainActivity", "stop");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        Log.d("MainActivity", "destroy");
+        if(isFinishing()) {
+
+            SharedPreferences.Editor editor =
+                getSharedPreferences(
+                    MainActivity.class.getSimpleName() + ".PREFERENCES_KEY",
+                    MODE_PRIVATE
+                )
+                .edit();
+
+            editor.putInt("time", mTimeLimit);
+            editor.apply();
+        }
     }
 
     @Override
