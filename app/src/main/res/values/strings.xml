@@ -7,4 +7,6 @@
     <string name="view_notification_dialog_message">You have set a time limit of %1$d minute(s)</string>
     <string name="view_notification_dialog_ok_text">exit</string>
     <string name="view_notification_dialog_cancel_text">delete</string>
+    <string name="preferences_key">com.javier.positiontracker.PREFRENCES</string>
+    <string name="time_limit_key">time_limit</string>
 </resources>

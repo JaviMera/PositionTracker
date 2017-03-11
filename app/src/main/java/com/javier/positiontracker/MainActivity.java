@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity
     public static final int FINE_LOCATION_CODE = 100;
 
     private final static float ZOOM_LEVEL_STREET = 15.0f;
-
+    private String mTimeLimitKey;
     private GoogleMap mMap;
     private Map<UserLocation, Marker> mMarkers;
     private TrackerService mService;
@@ -200,19 +200,24 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         mMarkers = new LinkedHashMap<>();
+        mTimeLimitKey = getString(R.string.time_limit_key);
 
-        if(savedInstanceState != null && savedInstanceState.containsKey("time")) {
+        if(savedInstanceState != null && savedInstanceState.containsKey(mTimeLimitKey)) {
 
-            mTimeLimit = savedInstanceState.getInt("time");
+            mTimeLimit = savedInstanceState.getInt(mTimeLimitKey);
             mNotificationActive = true;
             invalidateOptionsMenu();
         }
         else {
 
-            SharedPreferences prefs = getSharedPreferences(MainActivity.class.getSimpleName() + ".PREFERENCES_KEY", MODE_PRIVATE);
-            if(prefs.contains("time")) {
+            SharedPreferences prefs = getSharedPreferences(
+                getString(R.string.preferences_key),
+                MODE_PRIVATE
+            );
 
-                mTimeLimit = prefs.getInt("time", 0);
+            if(prefs.contains(mTimeLimitKey)) {
+
+                mTimeLimit = prefs.getInt(mTimeLimitKey, 0);
                 mNotificationActive = mTimeLimit != 0;
                 invalidateOptionsMenu();
             }
@@ -277,12 +282,12 @@ public class MainActivity extends AppCompatActivity
 
             SharedPreferences.Editor editor =
                 getSharedPreferences(
-                    MainActivity.class.getSimpleName() + ".PREFERENCES_KEY",
+                    getString(R.string.preferences_key),
                     MODE_PRIVATE
                 )
                 .edit();
 
-            editor.putInt("time", mTimeLimit);
+            editor.putInt(mTimeLimitKey, mTimeLimit);
             editor.apply();
         }
     }
@@ -295,7 +300,7 @@ public class MainActivity extends AppCompatActivity
         // Zero means there hasn't been one set yet
         if(mTimeLimit > 0) {
 
-            outState.putInt("time", mTimeLimit);
+            outState.putInt(mTimeLimitKey, mTimeLimit);
         }
     }
 
@@ -391,7 +396,7 @@ public class MainActivity extends AppCompatActivity
         Snackbar
             .make(
                 mRootLayout,
-                "Notification Created!",
+                "NOTIFICATION CREATED",
                 Snackbar.LENGTH_SHORT)
             .show();
     }
@@ -419,5 +424,13 @@ public class MainActivity extends AppCompatActivity
         mNotificationActive = false;
         mService.trackTime(mTimeLimit);
         invalidateOptionsMenu();
+
+        getSharedPreferences(
+            getString(R.string.preferences_key),
+            MODE_PRIVATE
+        )
+        .edit()
+        .remove(mTimeLimitKey)
+        .apply();
     }
 }
