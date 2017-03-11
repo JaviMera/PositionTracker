@@ -1,6 +1,5 @@
 package com.javier.positiontracker;
 
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
@@ -8,17 +7,15 @@ import android.content.Intent;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
-import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationBuilderWithBuilderAccessor;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.javier.positiontracker.broadcastreceivers.BroadcastBase;
+import com.javier.positiontracker.broadcastreceivers.BroadcastNotification;
 import com.javier.positiontracker.clients.GoogleClient;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
-import com.javier.positiontracker.location.LocationBroadcast;
+import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
 import com.javier.positiontracker.location.LocationCounter;
 import com.javier.positiontracker.location.LocationNotification;
 import com.javier.positiontracker.location.LocationThreshold;
@@ -31,12 +28,11 @@ import com.javier.positiontracker.model.UserLocation;
 public class TrackerService extends Service
     implements com.javier.positiontracker.clients.LocationUpdate {
 
-    public static final String TAG = TrackerService.class.getSimpleName();
-
     private GoogleClient mClient;
     private UserLocation mLastLocation;
     private IBinder mBinder;
-    private LocationBroadcast mLocationBroadcast;
+    private BroadcastBase mBroadcastLocation;
+    private BroadcastBase mBroadcastNotification;
     private LocationThreshold mLocationThreshold;
     private LocationCounter mLocationCounter;
     private LocationNotification mLocationNotification;
@@ -46,7 +42,8 @@ public class TrackerService extends Service
 
         mBinder = new ServiceBinder();
         mClient = new GoogleClient(this, this);
-        mLocationBroadcast = new LocationBroadcast(LocalBroadcastManager.getInstance(this));
+        mBroadcastLocation = new BroadcastLocation(LocalBroadcastManager.getInstance(this));
+        mBroadcastNotification = new BroadcastNotification(LocalBroadcastManager.getInstance(this));
 
         mLocationNotification = new LocationNotification(
             this,
@@ -115,7 +112,7 @@ public class TrackerService extends Service
             }
 
             // Notify the activity about a location change
-            mLocationBroadcast.send(mLastLocation);
+            mBroadcastLocation.send(mLastLocation);
         }
         // TODO: implement time accumulation in same location
         else {
@@ -130,6 +127,9 @@ public class TrackerService extends Service
                         getString(R.string.notification_title),
                         String.format(getString(R.string.notification_content), mLocationThreshold.getThreshold() / 1000 / 60 ),
                         R.mipmap.ic_launcher);
+
+                    // Send a broadcast message to the activity about the notification being launched
+                    mBroadcastNotification.send(null);
 
                     // Reset both threshold and counter since the user has reached the time limit
                     mLocationThreshold.reset();

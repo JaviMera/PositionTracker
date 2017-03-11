@@ -27,8 +27,12 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".TrackerService" />
-        <receiver android:name=".broadcastreceivers.BootReceiver">
+        <service
+            android:name=".TrackerService"
+            android:exported="false"
+            android:enabled="true"/>
+
+        <receiver android:name=".broadcastreceivers.BroadcastBoot">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>

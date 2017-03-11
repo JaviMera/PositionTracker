@@ -10,7 +10,7 @@ import com.javier.positiontracker.TrackerService;
  * Created by javie on 3/9/2017.
  */
 
-public class BootReceiver extends BroadcastReceiver {
+public class BroadcastBoot extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {

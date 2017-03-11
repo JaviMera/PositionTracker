@@ -2,4 +2,5 @@
     <string name="app_name">PositionTracker</string>
     <string name="notification_title">Position Tracker</string>
     <string name="notification_content">It\'s been %1$d minute(s).</string>
+    <string name="location_time_limit">You have set a time limit of %1$d</string>
 </resources>

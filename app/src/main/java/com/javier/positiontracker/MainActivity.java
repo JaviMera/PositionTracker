@@ -1,11 +1,10 @@
 package com.javier.positiontracker;
 
 import android.Manifest;
-import android.app.ActivityManager;
-import android.app.Notification;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -13,38 +12,32 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
-import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.text.SpannableStringBuilder;
-import android.text.style.ImageSpan;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
-import com.google.android.gms.common.stats.ConnectionEvent;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
+import com.javier.positiontracker.broadcastreceivers.BroadcastNotification;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.dialogs.DateRangeListener;
 import com.javier.positiontracker.dialogs.DialogDateRange;
 import com.javier.positiontracker.dialogs.DialogNotification;
-import com.javier.positiontracker.location.LocationBroadcast;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.util.ArrayList;
@@ -71,6 +64,7 @@ public class MainActivity extends AppCompatActivity
     private Map<UserLocation, Marker> mMarkers;
     private TrackerService mService;
     private boolean mBound;
+    private boolean mNotificationActive;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -104,34 +98,63 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
 
-        UserLocation location = intent.getParcelableExtra(LocationBroadcast.LOCATION_CHANGE_KEY);
+            UserLocation location = intent.getParcelableExtra(BroadcastLocation.KEY);
 
-        // Check if the incoming intent contains a valid new location
-        if(location != null) {
+            // Check if the incoming intent contains a valid new location
+            if(location != null) {
 
-            // Check if a marker is showing on the map
-            if(mCurrentMarker != null) {
+                // Check if a marker is showing on the map
+                if(mCurrentMarker != null) {
 
-                mCurrentMarker.setVisible(false);
-                mCurrentMarker.remove();
+                    mCurrentMarker.setVisible(false);
+                    mCurrentMarker.remove();
+                }
+
+                MarkerOptions options = new MarkerOptions();
+                options.position(location.getPosition());
+                options.title("Current Location");
+
+                mCurrentMarker = mMap.addMarker(options);
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentMarker.getPosition()));
+                mMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL_STREET), 2000, null);
             }
-
-            MarkerOptions options = new MarkerOptions();
-            options.position(location.getPosition());
-            options.title("Current Location");
-
-            mCurrentMarker = mMap.addMarker(options);
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentMarker.getPosition()));
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL_STREET), 2000, null);
-        }
         }
     };
+
+    private BroadcastReceiver mNotificationReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            // Set notification active back to false when the notification has been launched
+            mNotificationActive = false;
+
+            // Re-draw the menu icons when the notification has been launched
+            invalidateOptionsMenu();
+        }
+    };
+    private int mTimeLimit;
 
     @Override
     public boolean onCreatePanelMenu(int featureId, Menu menu) {
 
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main_activity, menu);
+
+        if(mNotificationActive) {
+
+            // Display the notification active icon when the user sets a time limit notification
+            // on the same location
+            menu.findItem(R.id.action_notification_active).setVisible(true);
+            menu.findItem(R.id.action_notification_none).setVisible(false);
+        }
+        else {
+
+            // Display the notification none icon if the notification was successfully launched
+            // indicating that a new time limit notification can be set again
+            menu.findItem(R.id.action_notification_active).setVisible(false);
+            menu.findItem(R.id.action_notification_none).setVisible(true);
+        }
+
         return true;
     }
 
@@ -148,10 +171,35 @@ public class MainActivity extends AppCompatActivity
                 dialog.show(getSupportFragmentManager(), "dialog_date_range");
                 break;
 
-            case R.id.action_notification:
+            case R.id.action_notification_none:
 
                 dialog = new DialogNotification();
                 dialog.show(getSupportFragmentManager(), "dialog_notification");
+                break;
+
+            case R.id.action_notification_active:
+
+                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+                dialogBuilder
+                    .setTitle("Location based time limit")
+                    .setMessage("You have set a time limit of " + mTimeLimit + " minute(s)")
+                    .setCancelable(true)
+                    .setPositiveButton("exit", null)
+                    .setNegativeButton("delete", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+
+                            mTimeLimit = 0;
+                            mNotificationActive = false;
+                            mService.trackTime(mTimeLimit);
+                            invalidateOptionsMenu();
+                        }
+                    });
+
+                    dialogBuilder
+                        .create()
+                        .show();
+
                 break;
 
             default:
@@ -195,7 +243,14 @@ public class MainActivity extends AppCompatActivity
         LocalBroadcastManager.getInstance(this)
             .registerReceiver(
                 mNewLocationReceiver,
-                new IntentFilter(LocationBroadcast.LOCATION_CHANGE)
+                new IntentFilter(BroadcastLocation.ACTION)
+            );
+
+        // Register a receiver to listen to notifications from the service
+        LocalBroadcastManager.getInstance(this)
+            .registerReceiver(
+                mNotificationReceiver,
+                new IntentFilter(BroadcastNotification.ACTION)
             );
     }
 
@@ -295,7 +350,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onSetNotification(int time) {
 
-        mService.trackTime(time);
+        mTimeLimit = time;
+        mService.trackTime(mTimeLimit);
+
+        mNotificationActive = true;
+        invalidateOptionsMenu();
 
         Snackbar
             .make(
