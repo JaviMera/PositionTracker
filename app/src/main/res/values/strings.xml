@@ -3,4 +3,8 @@
     <string name="notification_title">Position Tracker</string>
     <string name="notification_content">It\'s been %1$d minute(s).</string>
     <string name="location_time_limit">You have set a time limit of %1$d</string>
+    <string name="view_notification_dialog_title">Location based time limit</string>
+    <string name="view_notification_dialog_message">You have set a time limit of %1$d minute(s)</string>
+    <string name="view_notification_dialog_ok_text">exit</string>
+    <string name="view_notification_dialog_cancel_text">delete</string>
 </resources>

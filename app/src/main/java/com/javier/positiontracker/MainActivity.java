@@ -11,6 +11,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -21,6 +22,7 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -38,6 +40,7 @@ import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.dialogs.DateRangeListener;
 import com.javier.positiontracker.dialogs.DialogDateRange;
 import com.javier.positiontracker.dialogs.DialogNotification;
+import com.javier.positiontracker.dialogs.DialogViewNotification;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.util.ArrayList;
@@ -54,7 +57,7 @@ public class MainActivity extends AppCompatActivity
     implements
     OnMapReadyCallback,
     DateRangeListener,
-    DialogNotification.OnNotificationCallback {
+    DialogNotification.OnNotificationCallback, DialogViewNotification.OnViewNotification {
 
     public static final int FINE_LOCATION_CODE = 100;
 
@@ -179,27 +182,8 @@ public class MainActivity extends AppCompatActivity
 
             case R.id.action_notification_active:
 
-                AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-                dialogBuilder
-                    .setTitle("Location based time limit")
-                    .setMessage("You have set a time limit of " + mTimeLimit + " minute(s)")
-                    .setCancelable(true)
-                    .setPositiveButton("exit", null)
-                    .setNegativeButton("delete", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialogInterface, int i) {
-
-                            mTimeLimit = 0;
-                            mNotificationActive = false;
-                            mService.trackTime(mTimeLimit);
-                            invalidateOptionsMenu();
-                        }
-                    });
-
-                    dialogBuilder
-                        .create()
-                        .show();
-
+                dialog = DialogViewNotification.newInstance(mTimeLimit);
+                dialog.show(getSupportFragmentManager(), "dialog_view_notification");
                 break;
 
             default:
@@ -215,6 +199,13 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         mMarkers = new LinkedHashMap<>();
+
+        if(savedInstanceState != null && savedInstanceState.containsKey("time")) {
+
+            mTimeLimit = savedInstanceState.getInt("time");
+            mNotificationActive = true;
+            invalidateOptionsMenu();
+        }
 
         ButterKnife.bind(this);
 
@@ -264,6 +255,27 @@ public class MainActivity extends AppCompatActivity
 
             mBound = false;
             unbindService(mConnection);
+        }
+
+        Log.d("MainActivity", "stop");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        Log.d("MainActivity", "destroy");
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        // Check if the user has set up a location based time limit
+        // Zero means there hasn't been one set yet
+        if(mTimeLimit > 0) {
+
+            outState.putInt("time", mTimeLimit);
         }
     }
 
@@ -378,5 +390,14 @@ public class MainActivity extends AppCompatActivity
             // without registering a cancel callback
             mMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL_STREET), 2000, null);
         }
+    }
+
+    @Override
+    public void onNotificationDelete() {
+
+        mTimeLimit = 0;
+        mNotificationActive = false;
+        mService.trackTime(mTimeLimit);
+        invalidateOptionsMenu();
     }
 }
