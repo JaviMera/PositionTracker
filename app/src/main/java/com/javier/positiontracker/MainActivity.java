@@ -432,5 +432,12 @@ public class MainActivity extends AppCompatActivity
         .edit()
         .remove(mTimeLimitKey)
         .apply();
+
+        Snackbar
+            .make(
+                mRootLayout,
+                "NOTIFICATION DELETED",
+                Snackbar.LENGTH_SHORT)
+            .show();
     }
 }
