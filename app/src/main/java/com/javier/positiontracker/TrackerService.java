@@ -149,6 +149,8 @@ public class TrackerService extends Service
                     // Pass in null as we don't care what gets passed to the receiver
                     mBroadcastNotification.send(null);
 
+                    removeTimeLimit();
+
                     // Reset both threshold and counter since the user has reached the time limit
                     mLocationThreshold.reset();
                     mLocationCounter.reset();
