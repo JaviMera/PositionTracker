@@ -9,7 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.DatePicker;
 
-import com.javier.positiontracker.MainActivity;
+import com.javier.positiontracker.ui.TrackerActivity;
 import com.javier.positiontracker.R;
 
 import java.util.Calendar;
@@ -27,7 +27,7 @@ public class DialogDateRange extends DialogFragment {
 
     public static final String TAG = DialogDateRange.class.getSimpleName();
 
-    private MainActivity mParent;
+    private TrackerActivity mParent;
 
     @BindView(R.id.startDateView)
     DatePicker mStartDate;
@@ -38,7 +38,7 @@ public class DialogDateRange extends DialogFragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        mParent = (MainActivity) context;
+        mParent = (TrackerActivity) context;
     }
 
     @Nullable

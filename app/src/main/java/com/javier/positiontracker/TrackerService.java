@@ -146,6 +146,7 @@ public class TrackerService extends Service
                         R.mipmap.ic_launcher);
 
                     // Send a broadcast message to the activity about the notification being launched
+                    // Pass in null as we don't care what gets passed to the receiver
                     mBroadcastNotification.send(null);
 
                     // Reset both threshold and counter since the user has reached the time limit
@@ -160,7 +161,7 @@ public class TrackerService extends Service
         }
     }
 
-    public void trackTime(int time) {
+    public void trackTime(long time, long createdAt) {
 
         // Store the time notifications in milliseconds
         mLocationThreshold.setThreshold(time * 60 * 1000);
@@ -168,8 +169,6 @@ public class TrackerService extends Service
         // Reset the counter everytime there is a new time threshold set by the user
         mLocationCounter.reset();
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
         PositionTrackerDataSource source = new PositionTrackerDataSource(this);
 
         // Delete any existing notification
@@ -178,13 +177,13 @@ public class TrackerService extends Service
         // Create the new notification
         source.insertTimeLimit(
             time,
-            calendar.getTimeInMillis()
+            createdAt
         );
     }
 
     public class ServiceBinder extends Binder {
 
-        TrackerService getService() {
+        public TrackerService getService() {
 
             return TrackerService.this;
         }

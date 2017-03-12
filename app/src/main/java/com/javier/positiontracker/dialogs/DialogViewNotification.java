@@ -9,7 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 
-import com.javier.positiontracker.MainActivity;
+import com.javier.positiontracker.ui.TrackerActivity;
 import com.javier.positiontracker.R;
 
 /**
@@ -43,7 +43,7 @@ public class DialogViewNotification extends DialogFragment {
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        mListener = (MainActivity)context;
+        mListener = (TrackerActivity)context;
     }
 
 

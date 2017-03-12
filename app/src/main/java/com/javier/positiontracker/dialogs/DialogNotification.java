@@ -10,10 +10,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.javier.positiontracker.MainActivity;
+import com.javier.positiontracker.ui.TrackerActivity;
 import com.javier.positiontracker.R;
+
+import java.util.Calendar;
+import java.util.Date;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -28,7 +30,7 @@ public class DialogNotification extends DialogFragment{
 
     public interface OnNotificationCallback {
 
-        void onSetNotification(int time);
+        void onSetNotification(long time, long createdAt);
     }
 
     @BindView(R.id.timeSeekBar)
@@ -41,7 +43,7 @@ public class DialogNotification extends DialogFragment{
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        mListener = (MainActivity)context;
+        mListener = (TrackerActivity)context;
     }
 
     @NonNull
@@ -83,9 +85,12 @@ public class DialogNotification extends DialogFragment{
     public void onSetNotificationClick(View view) {
 
         int minutes = mSeekBar.getProgress();
-
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
         // Send the minutes selected to Main Activity
-        mListener.onSetNotification(minutes);
+        mListener.onSetNotification(
+            minutes,
+            calendar.getTimeInMillis());
 
         // Dismiss dialog when the user taps on OK
         dismiss();

@@ -1,18 +1,15 @@
-package com.javier.positiontracker;
+package com.javier.positiontracker.ui;
 
 import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.os.PersistableBundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -20,10 +17,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -34,8 +29,11 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.javier.positiontracker.R;
+import com.javier.positiontracker.TrackerService;
 import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
 import com.javier.positiontracker.broadcastreceivers.BroadcastNotification;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
@@ -52,27 +50,29 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class MainActivity extends AppCompatActivity
+public class TrackerActivity extends AppCompatActivity
     implements
+    TrackerActivityView,
     OnMapReadyCallback,
     DateRangeListener,
-    DialogNotification.OnNotificationCallback, DialogViewNotification.OnViewNotification {
+    DialogNotification.OnNotificationCallback,
+    DialogViewNotification.OnViewNotification {
 
     public static final int FINE_LOCATION_CODE = 100;
 
     private final static float ZOOM_LEVEL_STREET = 15.0f;
+
     private String mTimeLimitKey;
     private GoogleMap mMap;
     private Map<UserLocation, Marker> mMarkers;
     private TrackerService mService;
     private boolean mBound;
     private boolean mNotificationActive;
+    private TrackerActivityPresenter mPresenter;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -88,17 +88,17 @@ public class MainActivity extends AppCompatActivity
 
                 // If a time limit exists, then change the state of the activity to show the
                 // notification that was previously set by the user
-                mNotificationActive = true;
-                invalidateOptionsMenu();
+                mPresenter.setNotificationActive(true);
+                mPresenter.drawMenuIcons();
             }
 
-            mBound = true;
+            mPresenter.setBoundToService(true);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
 
-            mBound = false;
+            mPresenter.setBoundToService(false);
         }
     };
 
@@ -135,8 +135,8 @@ public class MainActivity extends AppCompatActivity
                 options.title("Current Location");
 
                 mCurrentMarker = mMap.addMarker(options);
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentMarker.getPosition()));
-                mMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL_STREET), 2000, null);
+                mPresenter.moveMapCamera(mCurrentMarker.getPosition());
+                mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
             }
         }
     };
@@ -145,11 +145,11 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
 
-        // Set notification active back to false when the notification has been launched
-        mNotificationActive = false;
+            // Set notification active back to false when the notification has been launched
+            mPresenter.setNotificationActive(false);
 
-        // Re-draw the menu icons when the notification has been launched
-        invalidateOptionsMenu();
+            // Re-draw the menu icons when the notification has been launched
+            mPresenter.drawMenuIcons();
         }
     };
 
@@ -220,13 +220,14 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mPresenter = new TrackerActivityPresenter(this);
         mMarkers = new LinkedHashMap<>();
         mTimeLimitKey = getString(R.string.time_limit_key);
 
         if(savedInstanceState != null && savedInstanceState.containsKey(mTimeLimitKey)) {
 
-            mNotificationActive = true;
-            invalidateOptionsMenu();
+            mPresenter.setNotificationActive(true);
+            mPresenter.drawMenuIcons();
         }
 
         ButterKnife.bind(this);
@@ -275,7 +276,7 @@ public class MainActivity extends AppCompatActivity
 
         if(mBound) {
 
-            mBound = false;
+            mPresenter.setBoundToService(false);
             unbindService(mConnection);
         }
     }
@@ -283,7 +284,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
     }
 
     @Override
@@ -312,7 +312,7 @@ public class MainActivity extends AppCompatActivity
                         return;
                     }
 
-                    Intent intent = new Intent(MainActivity.this, TrackerService.class);
+                    Intent intent = new Intent(TrackerActivity.this, TrackerService.class);
                     startService(intent);
                     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
                 }
@@ -376,24 +376,18 @@ public class MainActivity extends AppCompatActivity
                 .next()
                 .getValue();
 
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(firstMarker.getPosition()));
+            mPresenter.moveMapCamera(firstMarker.getPosition());
         }
     }
 
     @Override
-    public void onSetNotification(int time) {
+    public void onSetNotification(long time, long createdAt) {
 
-        mService.trackTime(time);
+        mService.trackTime(time, createdAt);
 
-        mNotificationActive = true;
-        invalidateOptionsMenu();
-
-        Snackbar
-            .make(
-                mRootLayout,
-                "NOTIFICATION CREATED",
-                Snackbar.LENGTH_SHORT)
-            .show();
+        mPresenter.setNotificationActive(true);
+        mPresenter.drawMenuIcons();
+        mPresenter.showSnackbar("NOTIFICATION CREATED");
     }
 
     @OnClick(R.id.locationFab)
@@ -402,13 +396,8 @@ public class MainActivity extends AppCompatActivity
         // Before moving and zooming in the current marker, check current marker is a valid marker
         if(mCurrentMarker != null) {
 
-            // Center the camera to the current marker position, which is the current device's
-            // location in the map
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(mCurrentMarker.getPosition()));
-
-            // Zoom in the current marker with stree level, an animation delay of 2 seconds, and
-            // without registering a cancel callback
-            mMap.animateCamera(CameraUpdateFactory.zoomTo(ZOOM_LEVEL_STREET), 2000, null);
+            mPresenter.moveMapCamera(mCurrentMarker.getPosition());
+            mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
         }
     }
 
@@ -419,19 +408,54 @@ public class MainActivity extends AppCompatActivity
 
         if(affectedRow > -1) {
 
-            mNotificationActive = false;
-            invalidateOptionsMenu();
-
-            Snackbar
-                .make(
-                    mRootLayout,
-                    "NOTIFICATION DELETED",
-                    Snackbar.LENGTH_SHORT)
-                .show();
+            mPresenter.setNotificationActive(false);
+            mPresenter.drawMenuIcons();
+            mPresenter.showSnackbar("NOTIFICATION DELETED");
         }
         else {
 
             Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    @Override
+    public void showSnackbar(String message) {
+
+        Snackbar
+            .make(
+                mRootLayout,
+                message,
+                Snackbar.LENGTH_SHORT)
+            .show();
+    }
+
+    @Override
+    public void setBoundToService(boolean bound) {
+
+        mBound = bound;
+    }
+
+    @Override
+    public void setNotificationActive(boolean active) {
+
+        mNotificationActive = active;
+    }
+
+    @Override
+    public void drawMenuIcons() {
+
+        invalidateOptionsMenu();
+    }
+
+    @Override
+    public void moveMapCamera(LatLng latLng) {
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+    }
+
+    @Override
+    public void zoomMapCamera(float zoomLvl, int animDuration, GoogleMap.CancelableCallback callback) {
+
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(zoomLvl), animDuration, callback);
     }
 }
