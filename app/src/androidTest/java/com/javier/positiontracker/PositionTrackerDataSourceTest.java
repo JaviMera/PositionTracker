@@ -6,6 +6,7 @@ import android.support.test.runner.AndroidJUnit4;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
+import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
 import junit.framework.Assert;
@@ -56,26 +57,6 @@ public class PositionTrackerDataSourceTest {
 
         // Act
         long rowId = mTarget.insertUserLocation(location);
-
-        // Assert
-        Assert.assertTrue(rowId > -1);
-        Assert.assertTrue(mTarget.isClosed());
-    }
-
-    @Test
-    public void dbShouldCreateLocationTime() throws Exception {
-
-        // Arrange
-        LatLng latLng = new LatLng(35.00, -15.3345);
-        long date = new Date().getTime();
-        UserLocation location = new UserLocation(latLng, date);
-        mTarget.insertUserLocation(location);
-
-        // Act
-        long rowId = mTarget.insertUserLocationTime(
-            location.getPosition().latitude,
-            location.getPosition().longitude
-        );
 
         // Assert
         Assert.assertTrue(rowId > -1);
@@ -165,5 +146,67 @@ public class PositionTrackerDataSourceTest {
         calendar.set(year, month, day);
 
         return calendar.getTime();
+    }
+
+    @Test
+    public void dbShouldInsertTimeLimit() throws Exception {
+
+        // Arrange
+        long minutes = 2 * 60 * 1000;
+        Calendar c = Calendar.getInstance();
+        c.setTime(new Date());
+        long createdAt = c.getTimeInMillis();
+
+        // Act
+        long rowsAffected = mTarget.insertTimeLimit(minutes, createdAt);
+
+        // Assert
+        Assert.assertTrue(rowsAffected > 0);
+    }
+
+    @Test
+    public void dbShouldReadNullWithoutTimeLimit() throws Exception {
+
+        // Act
+        TimeLimit timeLimit = mTarget.readTimeLimit();
+
+        // Assert
+        Assert.assertNull(timeLimit);
+    }
+
+    @Test
+    public void dbShouldReadTimeLimit() throws Exception {
+
+        // Arrange
+        long minutes = 2 * 60 * 1000;
+        Calendar c = Calendar.getInstance();
+        c.setTime(new Date());
+        long createdAt = c.getTimeInMillis();
+
+        // Act
+        mTarget.insertTimeLimit(minutes, createdAt);
+        TimeLimit timeLimit = mTarget.readTimeLimit();
+
+        // Assert
+        Assert.assertNotNull(timeLimit);
+        Assert.assertEquals(minutes, timeLimit.getTime());
+        Assert.assertEquals(createdAt, timeLimit.getCreatedAt());
+    }
+
+    @Test
+    public void dbShouldDeleteTimeLimit() throws Exception {
+
+        // Arrange
+        long minutes = 2 * 60 * 1000;
+        Calendar c = Calendar.getInstance();
+        c.setTime(new Date());
+        long createdAt = c.getTimeInMillis();
+
+        // Act
+        mTarget.insertTimeLimit(minutes, createdAt);
+        long affectedRow = mTarget.deleteTimeLimit();
+
+        // Assert
+        Assert.assertTrue(affectedRow == 1);
     }
 }

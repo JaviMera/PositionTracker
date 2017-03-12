@@ -4,9 +4,11 @@
     <string name="notification_content">It\'s been %1$d minute(s).</string>
     <string name="location_time_limit">You have set a time limit of %1$d</string>
     <string name="view_notification_dialog_title">Location based time limit</string>
-    <string name="view_notification_dialog_message">You have set a time limit of %1$d minute(s)</string>
+    <string name="view_notification_dialog_message">
+        You have set a time limit of %1$d minute(s)\n\n
+        Created at: %2$s
+    </string>
     <string name="view_notification_dialog_ok_text">exit</string>
     <string name="view_notification_dialog_cancel_text">delete</string>
-    <string name="preferences_key">com.javier.positiontracker.PREFRENCES</string>
     <string name="time_limit_key">time_limit</string>
 </resources>

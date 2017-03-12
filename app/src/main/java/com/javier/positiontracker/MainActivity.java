@@ -28,6 +28,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -42,6 +43,7 @@ import com.javier.positiontracker.dialogs.DateRangeListener;
 import com.javier.positiontracker.dialogs.DialogDateRange;
 import com.javier.positiontracker.dialogs.DialogNotification;
 import com.javier.positiontracker.dialogs.DialogViewNotification;
+import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.util.ArrayList;
@@ -49,6 +51,8 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.sql.DataSource;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -76,6 +80,18 @@ public class MainActivity extends AppCompatActivity
             TrackerService.ServiceBinder binder = (TrackerService.ServiceBinder) iBinder;
             mService = binder.getService();
             mService.startTracking();
+
+            TimeLimit timeLimit = mService.getTimeLimit();
+
+            // After successfully connecting with the service, check if there was a time limit set
+            if(null != timeLimit) {
+
+                // If a time limit exists, then change the state of the activity to show the
+                // notification that was previously set by the user
+                mNotificationActive = true;
+                invalidateOptionsMenu();
+            }
+
             mBound = true;
         }
 
@@ -129,14 +145,13 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            // Set notification active back to false when the notification has been launched
-            mNotificationActive = false;
+        // Set notification active back to false when the notification has been launched
+        mNotificationActive = false;
 
-            // Re-draw the menu icons when the notification has been launched
-            invalidateOptionsMenu();
+        // Re-draw the menu icons when the notification has been launched
+        invalidateOptionsMenu();
         }
     };
-    private int mTimeLimit;
 
     @Override
     public boolean onCreatePanelMenu(int featureId, Menu menu) {
@@ -183,7 +198,13 @@ public class MainActivity extends AppCompatActivity
 
             case R.id.action_notification_active:
 
-                dialog = DialogViewNotification.newInstance(mTimeLimit);
+                TimeLimit timeLimit = mService.getTimeLimit();
+
+                dialog = DialogViewNotification.newInstance(
+                    timeLimit.getTime(),
+                    timeLimit.getCreatedAt()
+                );
+
                 dialog.show(getSupportFragmentManager(), "dialog_view_notification");
                 break;
 
@@ -204,23 +225,8 @@ public class MainActivity extends AppCompatActivity
 
         if(savedInstanceState != null && savedInstanceState.containsKey(mTimeLimitKey)) {
 
-            mTimeLimit = savedInstanceState.getInt(mTimeLimitKey);
             mNotificationActive = true;
             invalidateOptionsMenu();
-        }
-        else {
-
-            SharedPreferences prefs = getSharedPreferences(
-                getString(R.string.preferences_key),
-                MODE_PRIVATE
-            );
-
-            if(prefs.contains(mTimeLimitKey)) {
-
-                mTimeLimit = prefs.getInt(mTimeLimitKey, 0);
-                mNotificationActive = mTimeLimit != 0;
-                invalidateOptionsMenu();
-            }
         }
 
         ButterKnife.bind(this);
@@ -278,29 +284,19 @@ public class MainActivity extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
 
-        if(isFinishing()) {
-
-            SharedPreferences.Editor editor =
-                getSharedPreferences(
-                    getString(R.string.preferences_key),
-                    MODE_PRIVATE
-                )
-                .edit();
-
-            editor.putInt(mTimeLimitKey, mTimeLimit);
-            editor.apply();
-        }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
+        TimeLimit timeLimit = mService.getTimeLimit();
+
         // Check if the user has set up a location based time limit
         // Zero means there hasn't been one set yet
-        if(mTimeLimit > 0) {
+        if(timeLimit != null && timeLimit.getTime() > 0) {
 
-            outState.putInt(mTimeLimitKey, mTimeLimit);
+            outState.putLong(mTimeLimitKey, timeLimit.getTime());
         }
     }
 
@@ -387,8 +383,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onSetNotification(int time) {
 
-        mTimeLimit = time;
-        mService.trackTime(mTimeLimit);
+        mService.trackTime(time);
 
         mNotificationActive = true;
         invalidateOptionsMenu();
@@ -420,24 +415,23 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onNotificationDelete() {
 
-        mTimeLimit = 0;
-        mNotificationActive = false;
-        mService.trackTime(mTimeLimit);
-        invalidateOptionsMenu();
+        long affectedRow = mService.removeTimeLimit();
 
-        getSharedPreferences(
-            getString(R.string.preferences_key),
-            MODE_PRIVATE
-        )
-        .edit()
-        .remove(mTimeLimitKey)
-        .apply();
+        if(affectedRow > -1) {
 
-        Snackbar
-            .make(
-                mRootLayout,
-                "NOTIFICATION DELETED",
-                Snackbar.LENGTH_SHORT)
-            .show();
+            mNotificationActive = false;
+            invalidateOptionsMenu();
+
+            Snackbar
+                .make(
+                    mRootLayout,
+                    "NOTIFICATION DELETED",
+                    Snackbar.LENGTH_SHORT)
+                .show();
+        }
+        else {
+
+            Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT).show();
+        }
     }
 }

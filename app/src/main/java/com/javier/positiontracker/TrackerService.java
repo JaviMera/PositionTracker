@@ -19,7 +19,11 @@ import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
 import com.javier.positiontracker.location.LocationCounter;
 import com.javier.positiontracker.location.LocationNotification;
 import com.javier.positiontracker.location.LocationThreshold;
+import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
+
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * Created by javie on 2/24/2017.
@@ -90,6 +94,19 @@ public class TrackerService extends Service
         mClient.disconnect();
     }
 
+    public TimeLimit getTimeLimit() {
+
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+
+        return source.readTimeLimit();
+    }
+
+    public long removeTimeLimit() {
+
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+        return source.deleteTimeLimit();
+    }
+
     @Override
     public void onNewLocation(Location location) {
 
@@ -150,6 +167,19 @@ public class TrackerService extends Service
 
         // Reset the counter everytime there is a new time threshold set by the user
         mLocationCounter.reset();
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+
+        // Delete any existing notification
+        source.deleteTimeLimit();
+
+        // Create the new notification
+        source.insertTimeLimit(
+            time,
+            calendar.getTimeInMillis()
+        );
     }
 
     public class ServiceBinder extends Binder {

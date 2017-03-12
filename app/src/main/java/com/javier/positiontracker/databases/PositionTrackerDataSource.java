@@ -6,8 +6,10 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.google.android.gms.maps.model.LatLng;
+import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -47,28 +49,6 @@ public class PositionTrackerDataSource {
         return rowId;
     }
 
-    public long insertUserLocationTime(double latitude, double longitude) {
-
-        mDb = mHelper.getWritableDatabase();
-        mDb.beginTransaction();
-
-        ContentValues values = new ContentValues();
-        values.put(PositionTrackerSQLiteHelper.LOCATION_TIME_LAT, latitude);
-        values.put(PositionTrackerSQLiteHelper.LOCATION_TIME_LONG, longitude);
-
-        long rowId = mDb.insert(
-            PositionTrackerSQLiteHelper.LOCATION_TIME_TABLE,
-            null,
-            values
-        );
-
-        mDb.setTransactionSuccessful();
-        mDb.endTransaction();
-        mDb.close();
-
-        return rowId;
-    }
-
     public boolean isClosed() {
 
         return !mDb.isOpen();
@@ -78,7 +58,7 @@ public class PositionTrackerDataSource {
 
         mDb = mHelper.getWritableDatabase();
         mDb.delete(PositionTrackerSQLiteHelper.LOCATION_TABLE, null, null);
-        mDb.delete(PositionTrackerSQLiteHelper.LOCATION_TIME_TABLE, null, null);
+        mDb.delete(PositionTrackerSQLiteHelper.TIME_LIMIT_TABLE, null, null);
 
         mDb.close();
     }
@@ -138,7 +118,6 @@ public class PositionTrackerDataSource {
     public boolean hasLocation(UserLocation location) {
 
         mDb = mHelper.getReadableDatabase();
-        mDb.beginTransaction();
 
         double latitude = location.getPosition().latitude;
         double longitude = location.getPosition().longitude;
@@ -161,10 +140,79 @@ public class PositionTrackerDataSource {
             recordExists = true;
         }
 
+        mDb.close();
+
+        return recordExists;
+    }
+
+    public long insertTimeLimit(long minutes, long createdAt) {
+
+        mDb = mHelper.getWritableDatabase();
+        mDb.beginTransaction();
+
+        ContentValues values = new ContentValues();
+        values.put(PositionTrackerSQLiteHelper.TIME_LIMIT_TIME, minutes);
+        values.put(PositionTrackerSQLiteHelper.TIME_LIMIT_CREATION_TIME, createdAt);
+
+        long rowId = mDb.insert(
+            PositionTrackerSQLiteHelper.TIME_LIMIT_TABLE,
+            null,
+            values);
+
         mDb.setTransactionSuccessful();
         mDb.endTransaction();
         mDb.close();
 
-        return recordExists;
+        return rowId;
+    }
+
+    public TimeLimit readTimeLimit() {
+
+        mDb = mHelper.getReadableDatabase();
+
+        Cursor cursor = mDb.query(
+            PositionTrackerSQLiteHelper.TIME_LIMIT_TABLE,
+            new String[]{
+                PositionTrackerSQLiteHelper.TIME_LIMIT_TIME,
+                PositionTrackerSQLiteHelper.TIME_LIMIT_CREATION_TIME
+            },
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+
+        TimeLimit timeLimit = null;
+        if(cursor.moveToFirst()) {
+
+            long time = getLong(cursor, PositionTrackerSQLiteHelper.TIME_LIMIT_TIME);
+            long createdAt = getLong(cursor, PositionTrackerSQLiteHelper.TIME_LIMIT_CREATION_TIME);
+
+            timeLimit = new TimeLimit(time, createdAt);
+        }
+
+        cursor.close();
+        mDb.close();
+
+        return timeLimit;
+    }
+
+    public long deleteTimeLimit() {
+
+        mDb = mHelper.getWritableDatabase();
+        mDb.beginTransaction();
+
+        long affectedRow = mDb.delete(
+            PositionTrackerSQLiteHelper.TIME_LIMIT_TABLE,
+            "1",
+            null
+        );
+
+        mDb.setTransactionSuccessful();
+        mDb.endTransaction();
+        mDb.close();
+
+        return affectedRow;
     }
 }

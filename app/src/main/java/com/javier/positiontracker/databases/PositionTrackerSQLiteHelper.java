@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
 
     public static final String POSITION_TRACKER_DB = "position_tracker.db";
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
 
     public static final String LOCATION_TABLE = "location";
     public static final String LOCATION_LAT = "latitude";
@@ -27,18 +27,14 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
             + "PRIMARY KEY (" + LOCATION_LAT + ", " + LOCATION_LONG + ")"
             + ")";
 
-    public static final String LOCATION_TIME_TABLE = "location_time";
-    public static final String LOCATION_TIME_LAT = "latitude";
-    public static final String LOCATION_TIME_LONG = "longitude";
-    public static final String LOCATION_TIME_ELAPSE = "time";
-
-    private String CREATE_LOCATION_TIME_TABLE = "CREATE TABLE "
-        + LOCATION_TIME_TABLE
+    public static final String TIME_LIMIT_TABLE = "time_limit";
+    public static final String TIME_LIMIT_TIME = "time";
+    public static final String TIME_LIMIT_CREATION_TIME = "created_at";
+    private String CREATE_TIME_LIMIT_TABLE = "CREATE TABLE "
+        + TIME_LIMIT_TABLE
         + "("
-        + LOCATION_TIME_LAT + " REAL, "
-        + LOCATION_TIME_LONG + " REAL, "
-        + LOCATION_TIME_ELAPSE + " INTEGER DEFAULT 0, "
-        + "PRIMARY KEY (" + LOCATION_TIME_LAT + ", " + LOCATION_TIME_LONG + ")"
+        + TIME_LIMIT_TIME + " INTEGER, "
+        + TIME_LIMIT_CREATION_TIME + " INTEGER"
         + ")";
 
     public PositionTrackerSQLiteHelper(Context context) {
@@ -49,7 +45,7 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
 
         sqLiteDatabase.execSQL(CREATE_LOCATION_TABLE);
-        sqLiteDatabase.execSQL(CREATE_LOCATION_TIME_TABLE);
+        sqLiteDatabase.execSQL(CREATE_TIME_LIMIT_TABLE);
     }
 
     @Override
@@ -65,7 +61,21 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
                 break;
 
             case 2:
-                sqLiteDatabase.execSQL(CREATE_LOCATION_TIME_TABLE);
+                sqLiteDatabase.execSQL("CREATE TABLE "
+                    + "location_time"
+                    + "("
+                    + "latitude" + " REAL, "
+                    + "longitude" + " REAL, "
+                    + "time_elapse" + " INTEGER DEFAULT 0, "
+                    + "PRIMARY TIME_KEY (" + "latitude" + ", " + "longitude" + ")"
+                    + ")"
+                );
+
+                break;
+
+            case 3:
+                sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + "location_time");
+                sqLiteDatabase.execSQL(CREATE_TIME_LIMIT_TABLE);
                 break;
         }
     }
