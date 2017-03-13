@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -291,6 +292,7 @@ public class TrackerActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
+        // Get the current time limit, if there is any
         TimeLimit timeLimit = mService.getTimeLimit();
 
         // Check if the user has set up a location based time limit
@@ -314,7 +316,13 @@ public class TrackerActivity extends AppCompatActivity
                     }
 
                     Intent intent = new Intent(TrackerActivity.this, TrackerService.class);
+
+                    // The first time the application is ever ran, start the service as a normal service
+                    // in order to invoke onStartCommand and return START_STICKY to allow the service
+                    // to restart when the last client unbinds from it
                     startService(intent);
+
+                    // Bind to the service once that is started.
                     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
                 }
                 break;

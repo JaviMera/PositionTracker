@@ -149,6 +149,7 @@ public class TrackerService extends Service
                     // Pass in null as we don't care what gets passed to the receiver
                     mBroadcastNotification.send(null);
 
+                    // Remove the time limit from the database once it has been launched
                     removeTimeLimit();
 
                     // Reset both threshold and counter since the user has reached the time limit
