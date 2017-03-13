@@ -1,6 +1,6 @@
 package com.javier.positiontracker;
 
-import com.javier.positiontracker.location.LocationThreshold;
+import com.javier.positiontracker.model.LocationThreshold;
 
 import junit.framework.Assert;
 

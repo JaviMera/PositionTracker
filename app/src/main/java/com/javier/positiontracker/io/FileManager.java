@@ -41,12 +41,7 @@ public class FileManager {
 
             for(UserLocation location : data) {
 
-                writer
-                    .append("Latitude: ")
-                    .append(String.valueOf(location.getPosition().latitude))
-                    .append("\r\n").append("Longitude: ")
-                    .append(String.valueOf(location.getPosition().longitude))
-                    .append("\r\n\r\n");
+                writer.append(location.toString());
             }
 
             writer.close();

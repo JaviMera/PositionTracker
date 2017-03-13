@@ -255,17 +255,12 @@ public class TrackerActivity extends AppCompatActivity
 
                     File file = fileManager.createFile(
                         Environment.DIRECTORY_DOCUMENTS,
-                        "locations.txt",
+                        getString(R.string.locations_file_name),
                         locations
                     );
 
-                    Intent intent = new Intent(Intent.ACTION_SEND);
-                    intent.setType("message/rfc822");
-                    intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"mailto:"});
-                    intent.putExtra(Intent.EXTRA_SUBJECT, "Places Visited");
-                    intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-
-                    startActivity(Intent.createChooser(intent, "Send email..."));
+                    Intent intent = createEmailIntent(file);
+                    startActivity(Intent.createChooser(intent, getString(R.string.export_intent_chooser_title)));
                 }
                 catch (IOException e) {
                     e.printStackTrace();
@@ -280,6 +275,17 @@ public class TrackerActivity extends AppCompatActivity
 
             Toast.makeText(this, "Unable to send locations via email", Toast.LENGTH_LONG).show();
         }
+    }
+
+    private Intent createEmailIntent(File file) {
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType(getString(R.string.export_intent_type));
+        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{getString(R.string.export_intent_email)});
+        intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.export_intent_subject));
+        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+
+        return intent;
     }
 
     @Override
@@ -367,18 +373,6 @@ public class TrackerActivity extends AppCompatActivity
 
             outState.putLong(mTimeLimitKey, timeLimit.getTime());
         }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-        switch(requestCode) {
-
-            case EXTERNAL_STORAGE_CODE:
-                break;
-        }
-
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override

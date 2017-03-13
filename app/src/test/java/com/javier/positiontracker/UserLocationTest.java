@@ -99,4 +99,20 @@ public class UserLocationTest {
         // Assert
         Assert.assertFalse(sameLocation);
     }
+
+    @Test
+    public void locationToString() throws Exception {
+
+        // Arrange
+        String expectedText = String.format(
+            "Latitude: %f\r\nLongitude: %f\r\n\r\n\r\n",
+            mLatLong.latitude,
+            mLatLong.longitude);;
+
+        // Act
+        String actualText = mTarget.toString();
+
+        // Assert
+        Assert.assertEquals(expectedText, actualText);
+    }
 }

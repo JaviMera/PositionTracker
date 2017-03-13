@@ -82,4 +82,13 @@ public class UserLocation implements Parcelable{
         parcel.writeParcelable(mLatLong, i);
         parcel.writeLong(mDate);
     }
+
+    @Override
+    public String toString() {
+
+        return String.format(
+            "Latitude: %f\r\nLongitude: %f\r\n\r\n\r\n",
+            mLatLong.latitude,
+            mLatLong.longitude);
+    }
 }

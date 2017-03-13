@@ -1,6 +1,6 @@
 package com.javier.positiontracker;
 
-import com.javier.positiontracker.location.LocationCounter;
+import com.javier.positiontracker.model.LocationCounter;
 
 import junit.framework.Assert;
 

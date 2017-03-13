@@ -16,14 +16,11 @@ import com.javier.positiontracker.broadcastreceivers.BroadcastNotification;
 import com.javier.positiontracker.clients.GoogleClient;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
-import com.javier.positiontracker.location.LocationCounter;
-import com.javier.positiontracker.location.LocationNotification;
-import com.javier.positiontracker.location.LocationThreshold;
+import com.javier.positiontracker.model.LocationCounter;
+import com.javier.positiontracker.model.LocationNotification;
+import com.javier.positiontracker.model.LocationThreshold;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
-
-import java.util.Calendar;
-import java.util.Date;
 
 /**
  * Created by javie on 2/24/2017.

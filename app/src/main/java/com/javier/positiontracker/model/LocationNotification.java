@@ -1,4 +1,4 @@
-package com.javier.positiontracker.location;
+package com.javier.positiontracker.model;
 
 import android.app.Notification;
 import android.app.NotificationManager;

@@ -11,4 +11,9 @@
     <string name="view_notification_dialog_ok_text">exit</string>
     <string name="view_notification_dialog_cancel_text">delete</string>
     <string name="time_limit_key">time_limit</string>
+    <string name="locations_file_name">locations.txt</string>
+    <string name="export_intent_type">message/rfc822</string>
+    <string name="export_intent_email">mailto:</string>
+    <string name="export_intent_subject">Places Visited</string>
+    <string name="export_intent_chooser_title">Send email...</string>
 </resources>
