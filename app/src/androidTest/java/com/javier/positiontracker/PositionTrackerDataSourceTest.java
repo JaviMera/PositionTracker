@@ -64,6 +64,27 @@ public class PositionTrackerDataSourceTest {
     }
 
     @Test
+    public void dbShouldReadAllLocations() throws Exception {
+
+        // Arrange
+        Date date1 = getDate(2017, Calendar.JANUARY, 1);
+        Date date2 = getDate(2017, Calendar.JANUARY, 25);
+        Date date3 = getDate(2017, Calendar.FEBRUARY, 15);
+        int expectedSize = 2;
+
+        // Act
+        mTarget.insertUserLocation(new UserLocation(new LatLng(14, 100), date1.getTime()));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(56, -140), date2.getTime()));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(24, 84), date3.getTime()));
+
+        List<UserLocation> locations = mTarget.readAllLocations();
+
+        // Assert
+        Assert.assertNotNull(locations);
+        Assert.assertEquals(3, locations.size());
+    }
+
+    @Test
     public void dbShouldReadLocationsWithRange() throws Exception {
 
         // Arrange

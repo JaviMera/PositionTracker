@@ -9,7 +9,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -85,8 +84,8 @@ public class PositionTrackerDataSource {
 
             do {
 
-                double latitude = readDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LAT);
-                double longitude = readDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LONG);
+                double latitude = getDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LAT);
+                double longitude = getDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LONG);
                 long date = getLong(cursor, PositionTrackerSQLiteHelper.LOCATION_DATE);
 
                 UserLocation location = new UserLocation(new LatLng(latitude, longitude), date);
@@ -108,7 +107,7 @@ public class PositionTrackerDataSource {
         return cursor.getLong(index);
     }
 
-    private double readDouble(Cursor cursor, String column) {
+    private double getDouble(Cursor cursor, String column) {
 
         int index = cursor.getColumnIndex(column);
         return cursor.getDouble(index);
@@ -214,5 +213,49 @@ public class PositionTrackerDataSource {
         mDb.close();
 
         return affectedRow;
+    }
+
+    public List<UserLocation> readAllLocations() {
+
+        List<UserLocation> locations = new LinkedList<>();
+
+        mDb = mHelper.getReadableDatabase();
+
+        Cursor cursor = mDb.query(
+            PositionTrackerSQLiteHelper.LOCATION_TABLE,
+            new String[]{
+                PositionTrackerSQLiteHelper.LOCATION_LAT,
+                PositionTrackerSQLiteHelper.LOCATION_LONG,
+                PositionTrackerSQLiteHelper.LOCATION_DATE
+            },
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+
+        if(cursor.moveToFirst()) {
+
+            do {
+
+                double latitude = getDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LAT);
+                double longitude = getDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LONG);
+                long date = getLong(cursor, PositionTrackerSQLiteHelper.LOCATION_DATE);
+
+                UserLocation location = new UserLocation(
+                    new LatLng(latitude, longitude),
+                    date
+                );
+
+                locations.add(location);
+
+            }while(cursor.moveToNext());
+        }
+
+        cursor.close();
+        mDb.close();
+
+        return locations;
     }
 }

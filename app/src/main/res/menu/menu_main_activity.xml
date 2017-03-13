@@ -11,16 +11,24 @@
 
     <item
         android:id="@+id/action_notification_none"
-        android:title="Add Notification"
+        android:title="Set time limit"
         app:showAsAction="ifRoom"
         android:icon="@mipmap/ic_notification_none"
         android:orderInCategory="101"/>
 
     <item
         android:id="@+id/action_notification_active"
-        android:title="Add Notification"
+        android:title="View time limit"
         app:showAsAction="ifRoom"
         android:icon="@mipmap/ic_notification_active"
         android:orderInCategory="101"
         android:visible="false"/>
+
+    <item
+        android:id="@+id/action_export_data"
+        android:title="Share data"
+        app:showAsAction="ifRoom"
+        android:icon="@mipmap/ic_share_data"
+        android:orderInCategory="102"
+        android:visible="true"/>
 </menu>

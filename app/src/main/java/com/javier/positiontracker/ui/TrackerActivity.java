@@ -8,18 +8,21 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
-import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.os.EnvironmentCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -45,6 +48,10 @@ import com.javier.positiontracker.dialogs.DialogViewNotification;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -207,6 +214,52 @@ public class TrackerActivity extends AppCompatActivity
                 );
 
                 dialog.show(getSupportFragmentManager(), "dialog_view_notification");
+                break;
+
+            case R.id.action_export_data:
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("message/rfc822");
+                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"javier_mera88@hotmail.com"});
+                intent.putExtra(Intent.EXTRA_SUBJECT, "Places Visited");
+
+                if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+
+
+                    File documentsDir = new File(Environment.getExternalStorageDirectory() + "/Documents");
+                    if(!documentsDir.exists()) {
+                        documentsDir.mkdir();
+                    }
+
+                    File file = new File(
+                        Environment.getExternalStorageDirectory(),
+                        Environment.DIRECTORY_DOCUMENTS + "/locations.txt");
+
+                    try {
+
+                        FileWriter writer = new FileWriter(file);
+                        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+                        List<UserLocation> locations = source.readAllLocations();
+
+                        for(UserLocation location : locations) {
+
+                            writer
+                                .append("Latitude: ")
+                                .append(String.valueOf(location.getPosition().latitude))
+                                .append("\r\n").append("Longitude: ")
+                                .append(String.valueOf(location.getPosition().longitude))
+                                .append("\r\n\r\n");
+                        }
+
+                        writer.close();
+                        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+                    }
+                    catch(IOException ex) {
+
+                        Log.d("MAIN_ACTIVITY", ex.getMessage());
+                    }
+                }
+                startActivity(Intent.createChooser(intent, "Send email..."));
+
                 break;
 
             default:
