@@ -45,6 +45,7 @@ import com.javier.positiontracker.dialogs.DateRangeListener;
 import com.javier.positiontracker.dialogs.DialogDateRange;
 import com.javier.positiontracker.dialogs.DialogNotification;
 import com.javier.positiontracker.dialogs.DialogViewNotification;
+import com.javier.positiontracker.io.FileManager;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
@@ -71,6 +72,7 @@ public class TrackerActivity extends AppCompatActivity
     DialogViewNotification.OnViewNotification {
 
     public static final int FINE_LOCATION_CODE = 100;
+    public static final int EXTERNAL_STORAGE_CODE = 1000;
 
     private final static float ZOOM_LEVEL_STREET = 15.0f;
 
@@ -217,56 +219,67 @@ public class TrackerActivity extends AppCompatActivity
                 break;
 
             case R.id.action_export_data:
-                Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.setType("message/rfc822");
-                intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"javier_mera88@hotmail.com"});
-                intent.putExtra(Intent.EXTRA_SUBJECT, "Places Visited");
 
-                if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
 
-
-                    File documentsDir = new File(Environment.getExternalStorageDirectory() + "/Documents");
-                    if(!documentsDir.exists()) {
-                        documentsDir.mkdir();
-                    }
-
-                    File file = new File(
-                        Environment.getExternalStorageDirectory(),
-                        Environment.DIRECTORY_DOCUMENTS + "/locations.txt");
-
-                    try {
-
-                        FileWriter writer = new FileWriter(file);
-                        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-                        List<UserLocation> locations = source.readAllLocations();
-
-                        for(UserLocation location : locations) {
-
-                            writer
-                                .append("Latitude: ")
-                                .append(String.valueOf(location.getPosition().latitude))
-                                .append("\r\n").append("Longitude: ")
-                                .append(String.valueOf(location.getPosition().longitude))
-                                .append("\r\n\r\n");
-                        }
-
-                        writer.close();
-                        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-                    }
-                    catch(IOException ex) {
-
-                        Log.d("MAIN_ACTIVITY", ex.getMessage());
-                    }
+                    ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        EXTERNAL_STORAGE_CODE);
                 }
-                startActivity(Intent.createChooser(intent, "Send email..."));
+                else {
+
+                    exportLocation();
+                }
 
                 break;
-
             default:
                 return super.onOptionsItemSelected(item);
         }
 
         return true;
+    }
+
+    private void exportLocation() {
+
+        if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+
+            FileManager fileManager = new FileManager(Environment.getExternalStorageDirectory());
+
+            if(fileManager.createDirectory(Environment.DIRECTORY_DOCUMENTS)) {
+
+                PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+                List<UserLocation> locations = source.readAllLocations();
+
+                try {
+
+                    File file = fileManager.createFile(
+                        Environment.DIRECTORY_DOCUMENTS,
+                        "locations.txt",
+                        locations
+                    );
+
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.setType("message/rfc822");
+                    intent.putExtra(Intent.EXTRA_EMAIL, new String[]{"mailto:"});
+                    intent.putExtra(Intent.EXTRA_SUBJECT, "Places Visited");
+                    intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+
+                    startActivity(Intent.createChooser(intent, "Send email..."));
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            else {
+
+                Toast.makeText(this, "Unable to send locations via email", Toast.LENGTH_LONG).show();
+            }
+        }
+        else {
+
+            Toast.makeText(this, "Unable to send locations via email", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -357,6 +370,18 @@ public class TrackerActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        switch(requestCode) {
+
+            case EXTERNAL_STORAGE_CODE:
+                break;
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
         switch (requestCode) {
@@ -377,6 +402,18 @@ public class TrackerActivity extends AppCompatActivity
 
                     // Bind to the service once that is started.
                     bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+                }
+                break;
+
+            case EXTERNAL_STORAGE_CODE:
+
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+                        return;
+                    }
+
+                    exportLocation();
                 }
                 break;
         }
