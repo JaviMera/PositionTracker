@@ -140,8 +140,7 @@ public class TrackerActivity extends AppCompatActivity
                 // Check if a marker is showing on the map
                 if(mCurrentMarker != null) {
 
-                    mCurrentMarker.setVisible(false);
-                    mCurrentMarker.remove();
+                    mPresenter.setMarkerVisible(false);
                 }
 
                 MarkerOptions options = new MarkerOptions();
@@ -197,10 +196,11 @@ public class TrackerActivity extends AppCompatActivity
         if(mDisplayHomeEnabled) {
 
             clearMarkers(mMarkers);
-            mCurrentMarker.setVisible(true);
+            mPresenter.setMarkerVisible(true);
             mPresenter.moveMapCamera(mCurrentMarker.getPosition());
-            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-            mDisplayHomeEnabled = false;
+            mPresenter.setDisplayHome(false);
+            mPresenter.setFabVisible(true);
+
             return;
         }
         super.onBackPressed();
@@ -215,10 +215,10 @@ public class TrackerActivity extends AppCompatActivity
 
             case android.R.id.home:
                 clearMarkers(mMarkers);
-                mCurrentMarker.setVisible(true);
+                mPresenter.setMarkerVisible(true);
                 mPresenter.moveMapCamera(mCurrentMarker.getPosition());
-                getSupportActionBar().setDisplayHomeAsUpEnabled(false);
-                mDisplayHomeEnabled = false;
+                mPresenter.setFabVisible(true);
+                mPresenter.setDisplayHome(false);
 
                 break;
 
@@ -288,7 +288,12 @@ public class TrackerActivity extends AppCompatActivity
                     );
 
                     Intent emailIntent = getEmailIntent(file);
-                    startActivity(Intent.createChooser(emailIntent, getString(R.string.export_intent_chooser_title)));
+                    Intent chooserIntent = Intent.createChooser(
+                        emailIntent,
+                        getString(R.string.export_intent_chooser_title)
+                    );
+
+                    startActivity(chooserIntent);
                 }
                 catch (IOException e) {
 
@@ -315,6 +320,11 @@ public class TrackerActivity extends AppCompatActivity
 
             Toast.makeText(this, "Unable to send locations via email", Toast.LENGTH_LONG).show();
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -460,9 +470,9 @@ public class TrackerActivity extends AppCompatActivity
             clearMarkers(mMarkers);
             showLocations(locations);
 
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            mDisplayHomeEnabled = true;
-            mCurrentMarker.setVisible(false);
+            mPresenter.setDisplayHome(true);
+            mPresenter.setFabVisible(false);
+            mPresenter.setMarkerVisible(false);
 
             // Move the camera to the first marker in the array of markers
             mPresenter.moveMapCamera(mMarkers.get(0).getPosition());
@@ -546,6 +556,35 @@ public class TrackerActivity extends AppCompatActivity
     public void zoomMapCamera(float zoomLvl, int animDuration, GoogleMap.CancelableCallback callback) {
 
         mMap.animateCamera(CameraUpdateFactory.zoomTo(zoomLvl), animDuration, callback);
+    }
+
+    @Override
+    public void setFabVisible(boolean visible) {
+
+       if(visible) {
+
+           mLocationFab.show();
+       }
+       else {
+
+           mLocationFab.hide();
+       }
+    }
+
+    @Override
+    public void setDisplayHome(boolean visible) {
+
+        if(getSupportActionBar() != null) {
+
+            getSupportActionBar().setDisplayHomeAsUpEnabled(visible);
+            mDisplayHomeEnabled = visible;
+        }
+    }
+
+    @Override
+    public void setMarkerVisible(boolean visible) {
+
+        mCurrentMarker.setVisible(visible);
     }
 
     public void showLocations(List<UserLocation> locations) {

@@ -45,4 +45,19 @@ public class TrackerActivityPresenter {
 
         mView.zoomMapCamera(zoomLvl, animDuration, callback);
     }
+
+    public void setFabVisible(boolean visible) {
+
+        mView.setFabVisible(visible);
+    }
+
+    public void setDisplayHome(boolean visible) {
+
+        mView.setDisplayHome(visible);
+    }
+
+    public void setMarkerVisible(boolean visible) {
+
+        mView.setMarkerVisible(visible);
+    }
 }

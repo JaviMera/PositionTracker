@@ -106,4 +106,43 @@ public class TrackerActivityPresenterTests {
         // Assert
         Mockito.verify(mView).zoomMapCamera(zoomLvl, animDuration, callback);
     }
+
+    @Test
+    public void setFabVisibility() throws Exception {
+
+        // Arrange
+        boolean visible = false;
+
+        // Act
+        mTarget.setFabVisible(visible);
+
+        // Assert
+        Mockito.verify(mView).setFabVisible(visible);
+    }
+
+    @Test
+    public void setDisplayHome() throws Exception {
+
+        // Arrange
+        boolean visible = true;
+
+        // Act
+        mTarget.setDisplayHome(visible);
+
+        // Assert
+        Mockito.verify(mView).setDisplayHome(visible);
+    }
+
+    @Test
+    public void setCurrentMarkerVisibility() throws Exception {
+
+        // Arrange
+        boolean visible = true;
+
+        // Act
+        mTarget.setMarkerVisible(visible);
+
+        // Assert
+        Mockito.verify(mView).setMarkerVisible(visible);
+    }
 }

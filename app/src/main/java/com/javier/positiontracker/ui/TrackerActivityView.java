@@ -15,4 +15,7 @@ public interface TrackerActivityView {
     void drawMenuIcons();
     void moveMapCamera(LatLng latLng);
     void zoomMapCamera(float zoomLvl, int animDuration, GoogleMap.CancelableCallback callback);
+    void setFabVisible(boolean visible);
+    void setDisplayHome(boolean visible);
+    void setMarkerVisible(boolean visible);
 }
