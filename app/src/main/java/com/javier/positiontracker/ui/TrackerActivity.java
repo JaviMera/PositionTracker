@@ -35,7 +35,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.javier.positiontracker.MainActivity_ViewBinding;
 import com.javier.positiontracker.R;
 import com.javier.positiontracker.TrackerService;
 import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
@@ -51,11 +50,9 @@ import com.javier.positiontracker.model.UserLocation;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -76,7 +73,7 @@ public class TrackerActivity extends AppCompatActivity
 
     private String mTimeLimitKey;
     private GoogleMap mMap;
-    private Map<UserLocation, Marker> mMarkers;
+    private List<Marker> mMarkers;
     private TrackerService mService;
     private boolean mBound;
     private boolean mNotificationActive;
@@ -257,7 +254,7 @@ public class TrackerActivity extends AppCompatActivity
                         locations
                     );
 
-                    Intent emailIntent = getEmailClientIntent(file);
+                    Intent emailIntent = getEmailIntent(file);
                     startActivity(Intent.createChooser(emailIntent, getString(R.string.export_intent_chooser_title)));
                 }
                 catch (IOException e) {
@@ -293,7 +290,7 @@ public class TrackerActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         mPresenter = new TrackerActivityPresenter(this);
-        mMarkers = new LinkedHashMap<>();
+        mMarkers = new LinkedList<>();
         mTimeLimitKey = getString(R.string.time_limit_key);
 
         if(savedInstanceState != null && savedInstanceState.containsKey(mTimeLimitKey)) {
@@ -427,12 +424,7 @@ public class TrackerActivity extends AppCompatActivity
 
         if(!mMarkers.isEmpty()) {
 
-            Marker firstMarker = mMarkers.entrySet()
-                .iterator()
-                .next()
-                .getValue();
-
-            mPresenter.moveMapCamera(firstMarker.getPosition());
+            mPresenter.moveMapCamera(mMarkers.get(0).getPosition());
         }
     }
 
@@ -517,43 +509,47 @@ public class TrackerActivity extends AppCompatActivity
 
     public void showLocations(Date minDate, Date maxDate) {
 
-        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-        final List<UserLocation> locations = source.readLocationsWithRange(
-                minDate.getTime(),
-                maxDate.getTime()
-        );
+        clearMarkers(mMarkers);
+        List<UserLocation> locations = getLocations(minDate, maxDate);
 
-        List<UserLocation> locationsToRemove = new ArrayList<>();
-
-        // Loop through the current locations to see which ones do not match the current filter
-        for(Map.Entry<UserLocation, Marker> entry : mMarkers.entrySet()) {
-
-            if(!locations.contains(entry.getKey())) {
-
-                locationsToRemove.add(entry.getKey());
-            }
-        }
-
-        for(UserLocation location : locationsToRemove) {
-
-            Marker marker = mMarkers.get(location);
-            marker.remove();
-            mMarkers.remove(location);
-        }
-
-        // Loop through the current locations to see which ones match the current filter
         for (UserLocation location : locations) {
 
-            MarkerOptions options = new MarkerOptions();
-            options.position(location.getPosition());
-            options.title(location.toString());
-
+            MarkerOptions options = getMarkerOptions(location);
             Marker marker = mMap.addMarker(options);
-            mMarkers.put(location, marker);
+            mMarkers.add(marker);
         }
     }
 
-    private Intent getEmailClientIntent(File file) {
+    private List<UserLocation> getLocations(Date minDate, Date maxDate) {
+
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+        return source.readLocationsWithRange(
+            minDate.getTime(),
+            maxDate.getTime()
+        );
+    }
+
+    private MarkerOptions getMarkerOptions(UserLocation location) {
+
+        MarkerOptions options = new MarkerOptions();
+        options.position(location.getPosition());
+        options.title(location.toString());
+
+        return options;
+    }
+
+    private void clearMarkers(List<Marker> markers) {
+
+        for(Marker marker : markers) {
+
+            marker.remove();
+        }
+
+        // Clear out all markers
+        markers.clear();
+    }
+
+    private Intent getEmailIntent(File file) {
 
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType(getString(R.string.export_intent_type));
