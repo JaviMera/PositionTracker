@@ -26,9 +26,9 @@
 
     <item
         android:id="@+id/action_export_data"
-        android:title="Share data"
+        android:title="Export locations"
         app:showAsAction="ifRoom"
-        android:icon="@mipmap/ic_share_data"
+        android:icon="@mipmap/ic_import_export"
         android:orderInCategory="102"
         android:visible="true"/>
 </menu>
