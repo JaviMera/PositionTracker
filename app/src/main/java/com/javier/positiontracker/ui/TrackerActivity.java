@@ -22,6 +22,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -77,6 +78,7 @@ public class TrackerActivity extends AppCompatActivity
     private TrackerService mService;
     private boolean mBound;
     private boolean mNotificationActive;
+    private boolean mDisplayHomeEnabled;
     private TrackerActivityPresenter mPresenter;
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -122,6 +124,13 @@ public class TrackerActivity extends AppCompatActivity
 
         @Override
         public void onReceive(Context context, Intent intent) {
+
+            // In case the user is viewing all positions within a date range, then don't bother
+            // in showing the current position on the map
+            if(mMarkers.size() > 0) {
+
+                return;
+            }
 
             UserLocation location = intent.getParcelableExtra(BroadcastLocation.KEY);
 
@@ -183,11 +192,35 @@ public class TrackerActivity extends AppCompatActivity
     }
 
     @Override
+    public void onBackPressed() {
+
+        if(mDisplayHomeEnabled) {
+
+            clearMarkers(mMarkers);
+            mCurrentMarker.setVisible(true);
+            mPresenter.moveMapCamera(mCurrentMarker.getPosition());
+            getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+            mDisplayHomeEnabled = false;
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
         DialogFragment dialog;
 
         switch(item.getItemId()) {
+
+            case android.R.id.home:
+                clearMarkers(mMarkers);
+                mCurrentMarker.setVisible(true);
+                mPresenter.moveMapCamera(mCurrentMarker.getPosition());
+                getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+                mDisplayHomeEnabled = false;
+
+                break;
 
             case R.id.action_date_range:
 
@@ -420,11 +453,20 @@ public class TrackerActivity extends AppCompatActivity
     @Override
     public void onDateRangeSelected(Date startDate, Date endDate) {
 
-        showLocations(startDate, endDate);
+        List<UserLocation> locations = getLocations(startDate, endDate);
 
-        if(!mMarkers.isEmpty()) {
+        if(locations.size() > 0) {
 
+            clearMarkers(mMarkers);
+            showLocations(locations);
+
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            mDisplayHomeEnabled = true;
+            mCurrentMarker.setVisible(false);
+
+            // Move the camera to the first marker in the array of markers
             mPresenter.moveMapCamera(mMarkers.get(0).getPosition());
+            mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
         }
     }
 
@@ -432,7 +474,6 @@ public class TrackerActivity extends AppCompatActivity
     public void onSetNotification(long time, long createdAt) {
 
         mService.trackTime(time, createdAt);
-
         mPresenter.setNotificationActive(true);
         mPresenter.drawMenuIcons();
         mPresenter.showSnackbar(getString(R.string.snackbar_notification_created));
@@ -507,10 +548,7 @@ public class TrackerActivity extends AppCompatActivity
         mMap.animateCamera(CameraUpdateFactory.zoomTo(zoomLvl), animDuration, callback);
     }
 
-    public void showLocations(Date minDate, Date maxDate) {
-
-        clearMarkers(mMarkers);
-        List<UserLocation> locations = getLocations(minDate, maxDate);
+    public void showLocations(List<UserLocation> locations) {
 
         for (UserLocation location : locations) {
 
