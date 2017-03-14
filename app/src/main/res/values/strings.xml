@@ -16,4 +16,10 @@
     <string name="export_intent_email">mailto:</string>
     <string name="export_intent_subject">Places Visited</string>
     <string name="export_intent_chooser_title">Send email...</string>
+    <string name="snackbar_notification_created">NOTIFICATION CREATED</string>
+    <string name="snackbar_notification_deleted">NOTIFICATION DELETED</string>
+    <string name="marker_current_location">Current Location</string>
+    <string name="dialog_date_range_tag">dialog_date_range</string>
+    <string name="dialog_notification_tag">dialog_notification</string>
+    <string name="dialog_view_notification_tag">dialog_view_notification</string>
 </resources>

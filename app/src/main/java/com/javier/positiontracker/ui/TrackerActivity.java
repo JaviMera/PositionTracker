@@ -140,7 +140,7 @@ public class TrackerActivity extends AppCompatActivity
 
                 MarkerOptions options = new MarkerOptions();
                 options.position(location.getPosition());
-                options.title("Current Location");
+                options.title(getString(R.string.marker_current_location));
 
                 mCurrentMarker = mMap.addMarker(options);
                 mPresenter.moveMapCamera(mCurrentMarker.getPosition());
@@ -195,13 +195,13 @@ public class TrackerActivity extends AppCompatActivity
             case R.id.action_date_range:
 
                 dialog = new DialogDateRange();
-                dialog.show(getSupportFragmentManager(), "dialog_date_range");
+                dialog.show(getSupportFragmentManager(), getString(R.string.dialog_date_range_tag));
                 break;
 
             case R.id.action_notification_none:
 
                 dialog = new DialogNotification();
-                dialog.show(getSupportFragmentManager(), "dialog_notification");
+                dialog.show(getSupportFragmentManager(), getString(R.string.dialog_notification_tag));
                 break;
 
             case R.id.action_notification_active:
@@ -213,7 +213,7 @@ public class TrackerActivity extends AppCompatActivity
                     timeLimit.getCreatedAt()
                 );
 
-                dialog.show(getSupportFragmentManager(), "dialog_view_notification");
+                dialog.show(getSupportFragmentManager(), getString(R.string.dialog_view_notification_tag));
                 break;
 
             case R.id.action_export_data:
@@ -443,7 +443,7 @@ public class TrackerActivity extends AppCompatActivity
 
         mPresenter.setNotificationActive(true);
         mPresenter.drawMenuIcons();
-        mPresenter.showSnackbar("NOTIFICATION CREATED");
+        mPresenter.showSnackbar(getString(R.string.snackbar_notification_created));
     }
 
     @OnClick(R.id.locationFab)
@@ -466,11 +466,11 @@ public class TrackerActivity extends AppCompatActivity
 
             mPresenter.setNotificationActive(false);
             mPresenter.drawMenuIcons();
-            mPresenter.showSnackbar("NOTIFICATION DELETED");
+            mPresenter.showSnackbar(getString(R.string.snackbar_notification_deleted));
         }
         else {
 
-            Toast.makeText(this, "Something went wrong", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Can't remove time limit at this moment", Toast.LENGTH_SHORT).show();
         }
     }
 
