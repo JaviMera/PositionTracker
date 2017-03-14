@@ -1,6 +1,7 @@
 package com.javier.positiontracker.ui;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -19,10 +20,8 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v4.os.EnvironmentCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -36,6 +35,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.javier.positiontracker.MainActivity_ViewBinding;
 import com.javier.positiontracker.R;
 import com.javier.positiontracker.TrackerService;
 import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
@@ -50,9 +50,7 @@ import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -259,11 +257,23 @@ public class TrackerActivity extends AppCompatActivity
                         locations
                     );
 
-                    Intent intent = createEmailIntent(file);
-                    startActivity(Intent.createChooser(intent, getString(R.string.export_intent_chooser_title)));
+                    Intent emailIntent = getEmailClientIntent(file);
+                    startActivity(Intent.createChooser(emailIntent, getString(R.string.export_intent_chooser_title)));
                 }
                 catch (IOException e) {
-                    e.printStackTrace();
+
+                    // By this instance permissions should be set, and thus not have a problem with
+                    // writing to external storage, but just in case prompt for permissions again
+                    ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        EXTERNAL_STORAGE_CODE
+                    );
+
+                }
+                catch (ActivityNotFoundException anf) {
+
+                    Toast.makeText(this, "There is no email client installed in the device.", Toast.LENGTH_LONG);
                 }
             }
             else {
@@ -275,17 +285,6 @@ public class TrackerActivity extends AppCompatActivity
 
             Toast.makeText(this, "Unable to send locations via email", Toast.LENGTH_LONG).show();
         }
-    }
-
-    private Intent createEmailIntent(File file) {
-
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType(getString(R.string.export_intent_type));
-        intent.putExtra(Intent.EXTRA_EMAIL, new String[]{getString(R.string.export_intent_email)});
-        intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.export_intent_subject));
-        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-
-        return intent;
     }
 
     @Override
@@ -346,7 +345,9 @@ public class TrackerActivity extends AppCompatActivity
     protected void onStop() {
         super.onStop();
 
+        // Unregister any broadcast receivers when the app is not in the foreground
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewLocationReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mNotificationReceiver);
 
         if(mBound) {
 
@@ -410,44 +411,6 @@ public class TrackerActivity extends AppCompatActivity
                     exportLocation();
                 }
                 break;
-        }
-    }
-
-    public void showLocations(Date minDate, Date maxDate) {
-
-        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-        final List<UserLocation> locations = source.readLocationsWithRange(
-            minDate.getTime(),
-            maxDate.getTime()
-        );
-
-        List<UserLocation> locationsToRemove = new ArrayList<>();
-
-        // Loop through the current locations to see which ones do not match the current filter
-        for(Map.Entry<UserLocation, Marker> entry : mMarkers.entrySet()) {
-
-            if(!locations.contains(entry.getKey())) {
-
-                locationsToRemove.add(entry.getKey());
-            }
-        }
-
-        for(UserLocation location : locationsToRemove) {
-
-            Marker marker = mMarkers.get(location);
-            marker.remove();
-            mMarkers.remove(location);
-        }
-
-        // Loop through the current locations to see which ones match the current filter
-        for (UserLocation location : locations) {
-
-            MarkerOptions options = new MarkerOptions();
-            options.position(location.getPosition());
-            options.title(location.toString());
-
-            Marker marker = mMap.addMarker(options);
-            mMarkers.put(location, marker);
         }
     }
 
@@ -550,5 +513,54 @@ public class TrackerActivity extends AppCompatActivity
     public void zoomMapCamera(float zoomLvl, int animDuration, GoogleMap.CancelableCallback callback) {
 
         mMap.animateCamera(CameraUpdateFactory.zoomTo(zoomLvl), animDuration, callback);
+    }
+
+    public void showLocations(Date minDate, Date maxDate) {
+
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+        final List<UserLocation> locations = source.readLocationsWithRange(
+                minDate.getTime(),
+                maxDate.getTime()
+        );
+
+        List<UserLocation> locationsToRemove = new ArrayList<>();
+
+        // Loop through the current locations to see which ones do not match the current filter
+        for(Map.Entry<UserLocation, Marker> entry : mMarkers.entrySet()) {
+
+            if(!locations.contains(entry.getKey())) {
+
+                locationsToRemove.add(entry.getKey());
+            }
+        }
+
+        for(UserLocation location : locationsToRemove) {
+
+            Marker marker = mMarkers.get(location);
+            marker.remove();
+            mMarkers.remove(location);
+        }
+
+        // Loop through the current locations to see which ones match the current filter
+        for (UserLocation location : locations) {
+
+            MarkerOptions options = new MarkerOptions();
+            options.position(location.getPosition());
+            options.title(location.toString());
+
+            Marker marker = mMap.addMarker(options);
+            mMarkers.put(location, marker);
+        }
+    }
+
+    private Intent getEmailClientIntent(File file) {
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType(getString(R.string.export_intent_type));
+        intent.putExtra(Intent.EXTRA_EMAIL, getString(R.string.export_intent_email));
+        intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.export_intent_subject));
+        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+
+        return intent;
     }
 }
