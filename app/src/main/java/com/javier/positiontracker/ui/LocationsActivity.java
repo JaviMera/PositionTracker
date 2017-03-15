@@ -72,7 +72,11 @@ public class LocationsActivity extends AppCompatActivity
 
             case TrackerActivity.EXPORT_LOCATIONS:
 
-                setResult(requestCode, null);
+                if(mLocations != null) {
+
+                    setResult(requestCode, null);
+                }
+
                 finish();
                 break;
         }
@@ -183,6 +187,15 @@ public class LocationsActivity extends AppCompatActivity
             if(fileManager.createDirectory(Environment.DIRECTORY_DOCUMENTS)) {
 
                 try {
+
+                    // If the user checked the box, load all locations from the database
+                    // Do this call only upon button click, so we don't load/unload them everytime
+                    // the user might check/uncheck the box
+                    if(mCheckBox.isChecked()) {
+
+                        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+                        mLocations = source.readAllLocations();
+                    }
 
                     File file = fileManager.createFile(
                         Environment.DIRECTORY_DOCUMENTS,

@@ -122,25 +122,20 @@ public class TrackerService extends Service
             new LatLng(location.getLatitude(), location.getLongitude()),
             currentDateInMilliseconds);
 
-        // If it's a new location, proceed to storing it in the database
-        if(mLastLocation == null || !mLastLocation.equals(newLocation)) {
+        mLastLocation = newLocation;
 
-            mLastLocation = newLocation;
-            mLocationCounter.reset();
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
 
-            PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+        // Check if the location already exists in the database
+        if(!source.hasLocation(mLastLocation)) {
 
-            // Check if the location already exists in the database
-            if(!source.hasLocation(mLastLocation)) {
-
-                source.insertUserLocation(mLastLocation);
-            }
-
-            // Notify the activity about a location change
-            mBroadcastLocation.send(mLastLocation);
+            source.insertUserLocation(mLastLocation);
         }
-        // TODO: implement time accumulation in same location
-        else {
+
+        // Notify the activity, if any is listening, about a location change
+        mBroadcastLocation.send(mLastLocation);
+
+        if(mLastLocation.equals(newLocation)) {
 
             if(mLocationThreshold.hasValidThreshold()) {
 
@@ -169,6 +164,10 @@ public class TrackerService extends Service
                     mLocationCounter.increment(mClient.getTimeInterval());
                 }
             }
+        }
+        else {
+
+            mLocationCounter.reset();
         }
     }
 
