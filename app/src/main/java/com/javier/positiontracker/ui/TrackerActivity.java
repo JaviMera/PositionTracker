@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Handler;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -69,6 +70,7 @@ public class TrackerActivity extends AppCompatActivity
 
     public static final int FINE_LOCATION_CODE = 100;
     public static final int EXTERNAL_STORAGE_CODE = 1000;
+    public static final int EXPORT_LOCATIONS = 1100;
 
     private final static float ZOOM_LEVEL_STREET = 15.0f;
 
@@ -254,13 +256,13 @@ public class TrackerActivity extends AppCompatActivity
                         this,
                         new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
                         EXTERNAL_STORAGE_CODE);
-                }
-                else {
 
-                    exportLocation();
+                    break;
                 }
 
+                exportLocation();
                 break;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -270,61 +272,19 @@ public class TrackerActivity extends AppCompatActivity
 
     private void exportLocation() {
 
-        if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-
-            FileManager fileManager = new FileManager(Environment.getExternalStorageDirectory());
-
-            if(fileManager.createDirectory(Environment.DIRECTORY_DOCUMENTS)) {
-
-                PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-                List<UserLocation> locations = source.readAllLocations();
-
-                try {
-
-                    File file = fileManager.createFile(
-                        Environment.DIRECTORY_DOCUMENTS,
-                        getString(R.string.locations_file_name),
-                        locations
-                    );
-
-                    Intent emailIntent = getEmailIntent(file);
-                    Intent chooserIntent = Intent.createChooser(
-                        emailIntent,
-                        getString(R.string.export_intent_chooser_title)
-                    );
-
-                    startActivity(chooserIntent);
-                }
-                catch (IOException e) {
-
-                    // By this instance permissions should be set, and thus not have a problem with
-                    // writing to external storage, but just in case prompt for permissions again
-                    ActivityCompat.requestPermissions(
-                        this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        EXTERNAL_STORAGE_CODE
-                    );
-
-                }
-                catch (ActivityNotFoundException anf) {
-
-                    Toast.makeText(this, "There is no email client installed in the device.", Toast.LENGTH_LONG);
-                }
-            }
-            else {
-
-                Toast.makeText(this, "Unable to send locations via email", Toast.LENGTH_LONG).show();
-            }
-        }
-        else {
-
-            Toast.makeText(this, "Unable to send locations via email", Toast.LENGTH_LONG).show();
-        }
+        Intent intent = new Intent(TrackerActivity.this, LocationsActivity.class);
+        startActivityForResult(intent, EXPORT_LOCATIONS);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+
+        switch(requestCode) {
+
+            case EXPORT_LOCATIONS:
+                mPresenter.showSnackbar(getString(R.string.snackbar_data_exported));
+                break;
+        }
     }
 
     @Override
@@ -366,6 +326,10 @@ public class TrackerActivity extends AppCompatActivity
         // Bind to TrackerService to store the location of the device periodically
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
+        registerReceivers();
+    }
+
+    private void registerReceivers() {
         // Register a receiver to listen to location updates from the service
         LocalBroadcastManager.getInstance(this)
             .registerReceiver(
@@ -405,14 +369,17 @@ public class TrackerActivity extends AppCompatActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        // Get the current time limit, if there is any
-        TimeLimit timeLimit = mService.getTimeLimit();
+        if(mService != null) {
 
-        // Check if the user has set up a location based time limit
-        // Zero means there hasn't been one set yet
-        if(timeLimit != null && timeLimit.getTime() > 0) {
+            // Get the current time limit, if there is any
+            TimeLimit timeLimit = mService.getTimeLimit();
 
-            outState.putLong(mTimeLimitKey, timeLimit.getTime());
+            // Check if the user has set up a location based time limit
+            // Zero means there hasn't been one set yet
+            if(timeLimit != null && timeLimit.getTime() > 0) {
+
+                outState.putLong(mTimeLimitKey, timeLimit.getTime());
+            }
         }
     }
 
@@ -427,6 +394,10 @@ public class TrackerActivity extends AppCompatActivity
                     if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                         return;
                     }
+
+                    // Register the receivers here as well since onStart will not be called when
+                    // permissions dialog is prompted
+                    registerReceivers();
 
                     Intent intent = new Intent(TrackerActivity.this, TrackerService.class);
 
@@ -624,16 +595,5 @@ public class TrackerActivity extends AppCompatActivity
 
         // Clear out all markers
         markers.clear();
-    }
-
-    private Intent getEmailIntent(File file) {
-
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType(getString(R.string.export_intent_type));
-        intent.putExtra(Intent.EXTRA_EMAIL, getString(R.string.export_intent_email));
-        intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.export_intent_subject));
-        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-
-        return intent;
     }
 }

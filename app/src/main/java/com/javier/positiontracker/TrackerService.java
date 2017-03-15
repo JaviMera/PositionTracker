@@ -22,6 +22,9 @@ import com.javier.positiontracker.model.LocationThreshold;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
+import java.util.Calendar;
+import java.util.Date;
+
 /**
  * Created by javie on 2/24/2017.
  */
@@ -107,9 +110,17 @@ public class TrackerService extends Service
     @Override
     public void onNewLocation(Location location) {
 
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        long currentDateInMilliseconds = calendar.getTime().getTime();
         UserLocation newLocation = new UserLocation(
             new LatLng(location.getLatitude(), location.getLongitude()),
-            location.getTime());
+            currentDateInMilliseconds);
 
         // If it's a new location, proceed to storing it in the database
         if(mLastLocation == null || !mLastLocation.equals(newLocation)) {

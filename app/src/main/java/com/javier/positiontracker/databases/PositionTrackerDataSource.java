@@ -258,4 +258,30 @@ public class PositionTrackerDataSource {
 
         return locations;
     }
+
+    public List<Long> readAllDates() {
+
+        mDb = mHelper.getReadableDatabase();
+
+        Cursor cursor = mDb.query(
+            true,
+            PositionTrackerSQLiteHelper.LOCATION_TABLE,
+            new String[]{PositionTrackerSQLiteHelper.LOCATION_DATE},
+            null, null, null, null, null, null
+        );
+
+        List<Long> dates = new LinkedList<>();
+
+        if(cursor.moveToFirst()) {
+
+            do {
+
+                Long date = getLong(cursor, PositionTrackerSQLiteHelper.LOCATION_DATE);
+                dates.add(date);
+            }while(cursor.moveToNext());
+        }
+        cursor.close();
+        mDb.close();
+        return dates;
+    }
 }

@@ -74,6 +74,7 @@ public class DialogDateRange extends DialogFragment {
         calendar.set(Calendar.HOUR_OF_DAY, hour);
         calendar.set(Calendar.MINUTE, minute);
         calendar.set(Calendar.SECOND, second);
+        calendar.set(Calendar.MILLISECOND, second);
 
         return calendar.getTime();
     }

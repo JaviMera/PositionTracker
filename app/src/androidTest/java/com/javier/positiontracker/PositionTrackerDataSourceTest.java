@@ -161,14 +161,6 @@ public class PositionTrackerDataSourceTest {
         Assert.assertFalse(hasLocation);
     }
 
-    private Date getDate(int year, int month, int day) {
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(year, month, day);
-
-        return calendar.getTime();
-    }
-
     @Test
     public void dbShouldInsertTimeLimit() throws Exception {
 
@@ -229,5 +221,38 @@ public class PositionTrackerDataSourceTest {
 
         // Assert
         Assert.assertTrue(affectedRow == 1);
+    }
+
+    @Test
+    public void dbShouldReadAllDistinctLocationDates() throws Exception {
+
+        // Arrange
+        Date date1 = getDate(2017, Calendar.JANUARY, 1);
+        Date date2 = getDate(2016, Calendar.JANUARY, 1);
+        Date date3 = getDate(2017, Calendar.JANUARY, 1);
+
+        // Act
+        long d1 = date1.getTime();
+        long d2 = date2.getTime();
+        long d3 = date3.getTime();
+        mTarget.insertUserLocation(new UserLocation(new LatLng(14, 100), d1));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(56, -140), d2));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(24, 84), d3));
+        List<Long> dates = mTarget.readAllDates();
+
+        // Assert
+        Assert.assertNotNull(dates);
+        Assert.assertEquals(2, dates.size());
+    }
+
+    private Date getDate(int year, int month, int day) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(year, month, day);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+
+        return calendar.getTime();
     }
 }

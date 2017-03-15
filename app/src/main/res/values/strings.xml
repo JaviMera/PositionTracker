@@ -22,4 +22,5 @@
     <string name="dialog_date_range_tag">dialog_date_range</string>
     <string name="dialog_notification_tag">dialog_notification</string>
     <string name="dialog_view_notification_tag">dialog_view_notification</string>
+    <string name="snackbar_data_exported">EMAIL SENT</string>
 </resources>
