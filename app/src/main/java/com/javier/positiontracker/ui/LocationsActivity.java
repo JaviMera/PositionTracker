@@ -66,23 +66,6 @@ public class LocationsActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-        switch(requestCode) {
-
-            case TrackerActivity.EXPORT_LOCATIONS:
-
-                if(mLocations != null) {
-
-                    setResult(requestCode, null);
-                }
-
-                finish();
-                break;
-        }
-    }
-
-    @Override
     public void setRecyclerEnabled(boolean enabled) {
 
         // Change color of each item's text depending if they are Enabled / Disabled
@@ -209,7 +192,7 @@ public class LocationsActivity extends AppCompatActivity
                         getString(R.string.export_intent_chooser_title)
                     );
 
-                    startActivityForResult(chooserIntent, TrackerActivity.EXPORT_LOCATIONS);
+                    startActivity(chooserIntent);
                 }
                 catch (ActivityNotFoundException anf) {
 

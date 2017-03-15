@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -70,7 +71,6 @@ public class TrackerActivity extends AppCompatActivity
 
     public static final int FINE_LOCATION_CODE = 100;
     public static final int EXTERNAL_STORAGE_CODE = 1000;
-    public static final int EXPORT_LOCATIONS = 1100;
 
     private final static float ZOOM_LEVEL_STREET = 15.0f;
 
@@ -82,10 +82,15 @@ public class TrackerActivity extends AppCompatActivity
     private boolean mNotificationActive;
     private boolean mDisplayHomeEnabled;
     private TrackerActivityPresenter mPresenter;
+    private Snackbar mConnectionSnackBar;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+
+            mConnectionSnackBar.dismiss();
+            mPresenter.showSnackbar("CONNECTED");
+
             TrackerService.ServiceBinder binder = (TrackerService.ServiceBinder) iBinder;
             mService = binder.getService();
             mService.startTracking();
@@ -121,6 +126,7 @@ public class TrackerActivity extends AppCompatActivity
     FloatingActionButton mLocationFab;
 
     private Marker mCurrentMarker;
+    private UserLocation mCurrentLocation;
 
     private BroadcastReceiver mNewLocationReceiver = new BroadcastReceiver() {
 
@@ -137,22 +143,23 @@ public class TrackerActivity extends AppCompatActivity
             UserLocation location = intent.getParcelableExtra(BroadcastLocation.KEY);
 
             // Check if the incoming intent contains a valid new location
-            if(location != null) {
+            if(location == null) {
 
-                // Check if a marker is showing on the map
-                if(mCurrentMarker != null) {
-
-                    mPresenter.setMarkerVisible(false);
-                }
-
-                MarkerOptions options = new MarkerOptions();
-                options.position(location.getPosition());
-                options.title(getString(R.string.marker_current_location));
-
-                mCurrentMarker = mMap.addMarker(options);
-                mPresenter.moveMapCamera(mCurrentMarker.getPosition());
-                mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
+                return;
             }
+
+            // Check if the same location is being sent
+            if(mCurrentLocation != null && location.equals(mCurrentLocation))
+                return;
+
+            mCurrentLocation = location;
+            MarkerOptions options = new MarkerOptions();
+            options.position(mCurrentLocation.getPosition());
+            options.title(getString(R.string.marker_current_location));
+
+            mCurrentMarker = mMap.addMarker(options);
+            mPresenter.moveMapCamera(mCurrentLocation.getPosition());
+            mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
         }
     };
 
@@ -273,18 +280,7 @@ public class TrackerActivity extends AppCompatActivity
     private void exportLocation() {
 
         Intent intent = new Intent(TrackerActivity.this, LocationsActivity.class);
-        startActivityForResult(intent, EXPORT_LOCATIONS);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-        switch(requestCode) {
-
-            case EXPORT_LOCATIONS:
-                mPresenter.showSnackbar(getString(R.string.snackbar_data_exported));
-                break;
-        }
+        startActivity(intent);
     }
 
     @Override
@@ -320,6 +316,9 @@ public class TrackerActivity extends AppCompatActivity
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, FINE_LOCATION_CODE);
             return;
         }
+
+        mConnectionSnackBar = Snackbar.make(mRootLayout, "CONNECTING...", BaseTransientBottomBar.LENGTH_INDEFINITE);
+        mConnectionSnackBar.show();
 
         Intent intent = new Intent(this, TrackerService.class);
 
@@ -394,6 +393,9 @@ public class TrackerActivity extends AppCompatActivity
                     if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                         return;
                     }
+
+                    mConnectionSnackBar = Snackbar.make(mRootLayout, "CONNECTING...", BaseTransientBottomBar.LENGTH_INDEFINITE);
+                    mConnectionSnackBar.show();
 
                     // Register the receivers here as well since onStart will not be called when
                     // permissions dialog is prompted
