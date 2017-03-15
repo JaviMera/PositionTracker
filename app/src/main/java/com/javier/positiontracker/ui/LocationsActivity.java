@@ -37,7 +37,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class LocationsActivity extends AppCompatActivity {
+public class LocationsActivity extends AppCompatActivity
+    implements LocationsActivityView{
 
     @BindView(R.id.allLocationsCheckBox)
     CheckBox mCheckBox;
@@ -49,26 +50,98 @@ public class LocationsActivity extends AppCompatActivity {
     RecyclerView mRecyclerView;
 
     private List<UserLocation> mLocations;
+    private LocationsActivityPresenter mPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_locations);
+        mPresenter = new LocationsActivityPresenter(this);
 
         ButterKnife.bind(this);
 
-        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-        List<Long> dates = source.readAllDates();
+        mPresenter.initializeRecyclerView();
+        mPresenter.initializeSpinnerView();
+        mPresenter.initializeCheckBoxView();
+    }
 
-        SpinnerAdapter adapter = new DatesSpinnerAdater(this, dates);
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        switch(requestCode) {
+
+            case TrackerActivity.EXPORT_LOCATIONS:
+
+                setResult(requestCode, null);
+                finish();
+                break;
+        }
+    }
+
+    @Override
+    public void setRecyclerEnabled(boolean enabled) {
+
+        // Change color of each item's text depending if they are Enabled / Disabled
+        LocationRecyclerAdapter recyclerAdapter = (LocationRecyclerAdapter) mRecyclerView.getAdapter();
+        recyclerAdapter.setEnabled(enabled);
+
+        // Enable / Disable scrolling of recycler
+        RecyclerLinearLayout layout = (RecyclerLinearLayout) mRecyclerView.getLayoutManager();
+        layout.setCanScroll(enabled);
+    }
+
+    @Override
+    public void setSpinnerEnabled(boolean enabled) {
+
+        // Enable / Disable spinner control
+        mSpinner.setEnabled(enabled);
+
+        // Change color of spinner's view text depending if it's Enabled / Disabled
+        DatesSpinnerAdater spinnerAdater = (DatesSpinnerAdater) mSpinner.getAdapter();
+        spinnerAdater.setEnabled(enabled);
+    }
+
+    @Override
+    public void initializeRecyclerView() {
+
         LocationRecyclerAdapter recyclerAdapter = new LocationRecyclerAdapter(this);
-
         mRecyclerView.setAdapter(recyclerAdapter);
+
         mRecyclerView.setLayoutManager(new RecyclerLinearLayout(this));
         mRecyclerView.setHasFixedSize(true);
+    }
+
+    @Override
+    public void initializeSpinnerView() {
+
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+        List<Long> dates = source.readAllDates();
+        SpinnerAdapter adapter = new DatesSpinnerAdater(this, dates);
 
         mSpinner.setAdapter(adapter);
-        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        mSpinner.setOnItemSelectedListener(getSpinnerListener());
+    }
+
+    @Override
+    public void initializeCheckBoxView() {
+
+        mCheckBox.setOnCheckedChangeListener(getCheckBoxListener());
+    }
+
+    private Intent getEmailIntent(File file) {
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType(getString(R.string.export_intent_type));
+        intent.putExtra(Intent.EXTRA_EMAIL, getString(R.string.export_intent_email));
+        intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.export_intent_subject));
+        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+
+        return intent;
+    }
+
+    private AdapterView.OnItemSelectedListener getSpinnerListener() {
+
+        return new AdapterView.OnItemSelectedListener() {
 
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
@@ -85,24 +158,19 @@ public class LocationsActivity extends AppCompatActivity {
             @Override
             public void onNothingSelected(AdapterView<?> adapterView) {
             }
-        });
+        };
+    }
 
-        mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+    private CompoundButton.OnCheckedChangeListener getCheckBoxListener() {
+
+        return new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
 
-            LocationRecyclerAdapter recyclerAdapter = (LocationRecyclerAdapter) mRecyclerView.getAdapter();
-            recyclerAdapter.setEnabled(!checked);
-
-            RecyclerLinearLayout layout = (RecyclerLinearLayout) mRecyclerView.getLayoutManager();
-            layout.setCanScroll(!checked);
-
-            mSpinner.setEnabled(!checked);
-
-            DatesSpinnerAdater spinnerAdater = (DatesSpinnerAdater) mSpinner.getAdapter();
-            spinnerAdater.setEnabled(!checked);
+                mPresenter.setRecyclerEnabled(!checked);
+                mPresenter.setSpinnerEnabled(!checked);
             }
-        });
+        };
     }
 
     @OnClick(R.id.sendLocationsButton)
@@ -130,20 +198,13 @@ public class LocationsActivity extends AppCompatActivity {
 
                     startActivityForResult(chooserIntent, TrackerActivity.EXPORT_LOCATIONS);
                 }
-                catch (IOException e) {
-
-                    // By this instance permissions should be set, and thus not have a problem with
-                    // writing to external storage, but just in case prompt for permissions again
-                    ActivityCompat.requestPermissions(
-                        this,
-                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        TrackerActivity.EXTERNAL_STORAGE_CODE
-                    );
-
-                }
                 catch (ActivityNotFoundException anf) {
 
                     Toast.makeText(this, "There is no email client installed in the device.", Toast.LENGTH_LONG);
+                }
+                catch (IOException ignored) {
+
+                    // By this instance the permissions should be already set for external storage
                 }
             }
             else {
@@ -155,29 +216,5 @@ public class LocationsActivity extends AppCompatActivity {
 
             Toast.makeText(this, "Unable to send locations via email", Toast.LENGTH_LONG).show();
         }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
-        switch(requestCode) {
-
-            case TrackerActivity.EXPORT_LOCATIONS:
-
-                setResult(requestCode, null);
-                finish();
-                break;
-        }
-    }
-
-    private Intent getEmailIntent(File file) {
-
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType(getString(R.string.export_intent_type));
-        intent.putExtra(Intent.EXTRA_EMAIL, getString(R.string.export_intent_email));
-        intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.export_intent_subject));
-        intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
-
-        return intent;
     }
 }
