@@ -82,14 +82,10 @@ public class TrackerActivity extends AppCompatActivity
     private boolean mNotificationActive;
     private boolean mDisplayHomeEnabled;
     private TrackerActivityPresenter mPresenter;
-    private Snackbar mConnectionSnackBar;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-
-            mConnectionSnackBar.dismiss();
-            mPresenter.showSnackbar("CONNECTED");
 
             TrackerService.ServiceBinder binder = (TrackerService.ServiceBinder) iBinder;
             mService = binder.getService();
@@ -137,7 +133,12 @@ public class TrackerActivity extends AppCompatActivity
             // in showing the current position on the map
             if(mMarkers.size() > 0) {
 
+                mPresenter.setMarkerVisible(false);
                 return;
+            }
+            else {
+
+                mPresenter.setMarkerVisible(true);
             }
 
             UserLocation location = intent.getParcelableExtra(BroadcastLocation.KEY);
@@ -157,6 +158,14 @@ public class TrackerActivity extends AppCompatActivity
             options.position(mCurrentLocation.getPosition());
             options.title(getString(R.string.marker_current_location));
 
+            // Remove current marker from the map before assigning the new one
+            if(mCurrentMarker != null) {
+
+                mCurrentMarker.setVisible(false);
+                mCurrentMarker.remove();
+            }
+
+            // Create the new marker with the newest location
             mCurrentMarker = mMap.addMarker(options);
             mPresenter.moveMapCamera(mCurrentLocation.getPosition());
             mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
@@ -317,9 +326,6 @@ public class TrackerActivity extends AppCompatActivity
             return;
         }
 
-        mConnectionSnackBar = Snackbar.make(mRootLayout, "CONNECTING...", BaseTransientBottomBar.LENGTH_INDEFINITE);
-        mConnectionSnackBar.show();
-
         Intent intent = new Intent(this, TrackerService.class);
 
         // Bind to TrackerService to store the location of the device periodically
@@ -393,9 +399,6 @@ public class TrackerActivity extends AppCompatActivity
                     if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                         return;
                     }
-
-                    mConnectionSnackBar = Snackbar.make(mRootLayout, "CONNECTING...", BaseTransientBottomBar.LENGTH_INDEFINITE);
-                    mConnectionSnackBar.show();
 
                     // Register the receivers here as well since onStart will not be called when
                     // permissions dialog is prompted
@@ -557,7 +560,10 @@ public class TrackerActivity extends AppCompatActivity
     @Override
     public void setMarkerVisible(boolean visible) {
 
-        mCurrentMarker.setVisible(visible);
+        if(mCurrentMarker != null) {
+
+            mCurrentMarker.setVisible(visible);
+        }
     }
 
     public void showLocations(List<UserLocation> locations) {

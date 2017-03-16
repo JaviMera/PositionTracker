@@ -46,7 +46,7 @@ public class GoogleClient implements
             .build();
 
         mRequest = LocationRequest.create()
-            .setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY)
+            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
             .setInterval(mInterval)
             .setFastestInterval(1000L);
 

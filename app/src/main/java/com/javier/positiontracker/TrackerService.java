@@ -10,6 +10,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.broadcastreceivers.BroadcastBase;
@@ -33,14 +34,17 @@ import java.util.Date;
 public class TrackerService extends Service
     implements com.javier.positiontracker.clients.LocationUpdate {
 
+    public static final float SMALLEST_DISTANCE = 20.0f;
     private GoogleClient mClient;
     private UserLocation mLastLocation;
     private IBinder mBinder;
     private BroadcastBase mBroadcastLocation;
     private BroadcastBase mBroadcastNotification;
+
     private LocationThreshold mLocationThreshold;
     private LocationCounter mLocationCounter;
     private LocationNotification mLocationNotification;
+    private Location mLastGoogleLocation;
 
     @Override
     public void onCreate() {
@@ -49,7 +53,6 @@ public class TrackerService extends Service
         mClient = new GoogleClient(this, this);
         mBroadcastLocation = new BroadcastLocation(LocalBroadcastManager.getInstance(this));
         mBroadcastNotification = new BroadcastNotification(LocalBroadcastManager.getInstance(this));
-
         mLocationNotification = new LocationNotification(
             this,
             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)
@@ -108,46 +111,77 @@ public class TrackerService extends Service
         return source.deleteTimeLimit();
     }
 
-    @Override
-    public void onNewLocation(Location location) {
+    private long getCurrentDateInMilliseconds(Date date) {
 
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
+        calendar.setTime(date);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
 
-        long currentDateInMilliseconds = calendar.getTime().getTime();
-        UserLocation newLocation = new UserLocation(
+        return calendar.getTime().getTime();
+    }
+
+    private UserLocation createUserLocation(Location location) {
+
+        return new UserLocation(
             new LatLng(location.getLatitude(), location.getLongitude()),
-            currentDateInMilliseconds);
+            getCurrentDateInMilliseconds(new Date())
+        );
+    }
 
-        mLastLocation = newLocation;
+    @Override
+    public void onNewLocation(Location location) {
 
-        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+        float distance = -1.0f;
 
-        // Check if the location already exists in the database
-        if(!source.hasLocation(mLastLocation)) {
+        if(mLastGoogleLocation != null) {
 
-            source.insertUserLocation(mLastLocation);
+            distance = mLastGoogleLocation.distanceTo(location);
         }
 
+        mLastGoogleLocation = location;
+
+        UserLocation newLocation = createUserLocation(location);
+
         // Notify the activity, if any is listening, about a location change
-        mBroadcastLocation.send(mLastLocation);
+        mBroadcastLocation.send(newLocation);
 
-        if(mLastLocation.equals(newLocation)) {
+        // Check if the new location is considered a new location based on the distance between
+        // last location and new location
+        if(distance != -1.0f && distance >= SMALLEST_DISTANCE) {
 
+            PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+
+            // Check if the location already exists in the database
+            if (!source.hasLocation(newLocation)) {
+
+                source.insertUserLocation(newLocation);
+            }
+
+            // For every new location, reset the counter as the user has clearly started moving
+            mLocationCounter.reset();
+
+            // Save the new location as our last known location
+            mLastLocation = newLocation;
+        }
+
+        else {
+
+            // If it's not a new location, then check if there is a time limit setup
+            // A valid threshold will be a value > 0
             if(mLocationThreshold.hasValidThreshold()) {
 
+                // Check if the counter is greater or equal than the threshold
                 if(mLocationCounter.getCounter() >= mLocationThreshold.getThreshold()) {
 
                     // Send a notification to the user when they've reached their time limit
                     // at the same location
                     mLocationNotification.send(
-                        getString(R.string.notification_title),
-                        String.format(getString(R.string.notification_content), mLocationThreshold.getThreshold() / 1000 / 60 ),
-                        R.mipmap.ic_launcher);
+                            getString(R.string.notification_title),
+                            String.format(getString(R.string.notification_content), mLocationThreshold.getThreshold() / 1000 / 60 ),
+                            R.mipmap.ic_launcher);
 
                     // Send a broadcast message to the activity about the notification being launched
                     // Pass in null as we don't care what gets passed to the receiver
@@ -162,13 +196,11 @@ public class TrackerService extends Service
                 }
                 else {
 
+                    // If the counter is still less than the threshold, then increment it by the
+                    // location update time
                     mLocationCounter.increment(mClient.getTimeInterval());
                 }
             }
-        }
-        else {
-
-            mLocationCounter.reset();
         }
     }
 
