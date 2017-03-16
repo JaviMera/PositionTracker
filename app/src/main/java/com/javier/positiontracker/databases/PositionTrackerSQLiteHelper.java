@@ -3,6 +3,7 @@ package com.javier.positiontracker.databases;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.provider.BaseColumns;
 
 /**
  * Created by javie on 2/17/2017.
@@ -11,7 +12,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
 
     public static final String POSITION_TRACKER_DB = "position_tracker.db";
-    public static final int VERSION = 4;
+    public static final int VERSION = 5;
 
     public static final String LOCATION_TABLE = "location";
     public static final String LOCATION_LAT = "latitude";
@@ -21,10 +22,10 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
     private String CREATE_LOCATION_TABLE = "CREATE TABLE "
             + LOCATION_TABLE
             + "("
+            + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + LOCATION_LAT + " REAL, "
             + LOCATION_LONG + " REAL, "
-            + LOCATION_DATE + " INTEGER, "
-            + "PRIMARY KEY (" + LOCATION_LAT + ", " + LOCATION_LONG + ")"
+            + LOCATION_DATE + " INTEGER"
             + ")";
 
     public static final String TIME_LIMIT_TABLE = "time_limit";
@@ -76,6 +77,10 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
             case 3:
                 sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + "location_time");
                 sqLiteDatabase.execSQL(CREATE_TIME_LIMIT_TABLE);
+                break;
+
+            case 4:
+                sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
                 break;
         }
     }

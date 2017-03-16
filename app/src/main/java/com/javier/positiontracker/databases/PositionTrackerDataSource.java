@@ -113,37 +113,6 @@ public class PositionTrackerDataSource {
         return cursor.getDouble(index);
     }
 
-
-    public boolean hasLocation(UserLocation location) {
-
-        mDb = mHelper.getReadableDatabase();
-
-        double latitude = location.getPosition().latitude;
-        double longitude = location.getPosition().longitude;
-
-        Cursor cursor = mDb.query(
-                PositionTrackerSQLiteHelper.LOCATION_TABLE,
-                new String[]{
-                    PositionTrackerSQLiteHelper.LOCATION_LAT,
-                    PositionTrackerSQLiteHelper.LOCATION_LONG
-                },
-                PositionTrackerSQLiteHelper.LOCATION_LAT + "=? AND " + PositionTrackerSQLiteHelper.LOCATION_LONG + "=?",
-                new String[]{String.valueOf(latitude), String.valueOf(longitude)},
-                null,null,null
-        );
-
-        boolean recordExists = false;
-        if(cursor.moveToFirst()) {
-
-            cursor.close();
-            recordExists = true;
-        }
-
-        mDb.close();
-
-        return recordExists;
-    }
-
     public long insertTimeLimit(long minutes, long createdAt) {
 
         mDb = mHelper.getWritableDatabase();
