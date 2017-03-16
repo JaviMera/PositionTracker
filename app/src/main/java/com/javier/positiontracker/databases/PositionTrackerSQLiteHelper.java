@@ -12,7 +12,7 @@ import android.provider.BaseColumns;
 public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
 
     public static final String POSITION_TRACKER_DB = "position_tracker.db";
-    public static final int VERSION = 5;
+    public static final int VERSION = 7;
 
     public static final String LOCATION_TABLE = "location";
     public static final String LOCATION_LAT = "latitude";
@@ -22,10 +22,10 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
     private String CREATE_LOCATION_TABLE = "CREATE TABLE "
             + LOCATION_TABLE
             + "("
-            + BaseColumns._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
             + LOCATION_LAT + " REAL, "
             + LOCATION_LONG + " REAL, "
-            + LOCATION_DATE + " INTEGER"
+            + LOCATION_DATE + " INTEGER, "
+            + "PRIMARY KEY (" + LOCATION_LAT + ", " + LOCATION_LONG + ", " + LOCATION_DATE +")"
             + ")";
 
     public static final String TIME_LIMIT_TABLE = "time_limit";
@@ -80,6 +80,14 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
                 break;
 
             case 4:
+
+                // Drop table after deleting the primary key composed of lat and long
+                sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
+                break;
+
+            case 5:
+            case 6:
+                // Drop table after creating compound key with lat long and date
                 sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
                 break;
         }

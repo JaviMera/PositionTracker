@@ -195,7 +195,6 @@ public class PositionTrackerDataSourceTest {
         Assert.assertTrue(affectedRow == 1);
     }
 
-    @Ignore
     @Test
     public void dbShouldReadAllDistinctLocationDates() throws Exception {
 
