@@ -1,11 +1,13 @@
 package com.javier.positiontracker;
 
+import android.location.Location;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
+import com.javier.positiontracker.databases.PositionTrackerSQLiteHelper;
 import com.javier.positiontracker.model.LocationAddress;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
@@ -253,6 +255,129 @@ public class PositionTrackerDataSourceTest {
 
         // Assert
         Assert.assertTrue(expectedAddress.equals(actualAddress));
+    }
+
+    @Test
+    public void dbShouldInsertLastLocation() throws Exception {
+
+        // Arrange
+        String provider = "harambeGPS";
+        double latitude = 80.909090;
+        double longitude = -100.219021;
+        Location location = new Location(provider);
+        location.setLatitude(latitude);
+        location.setLongitude(longitude);
+
+        // Act
+        long rowId = mTarget.insertLastLocation(PositionTrackerSQLiteHelper.LAST_LOCATION_ID_VALUE, location);
+
+        // Assert
+        Assert.assertTrue(rowId > -1);
+    }
+
+    @Test
+    public void dbShouldReadLastLocation() throws Exception {
+
+        // Arrange
+        String provider = "harambeGPS";
+        double latitude = 80.909090;
+        double longitude = -100.219021;
+        Location expectedLocation = new Location(provider);
+        expectedLocation.setLatitude(latitude);
+        expectedLocation.setLongitude(longitude);
+
+        // Act
+        mTarget.insertLastLocation(PositionTrackerSQLiteHelper.LAST_LOCATION_ID_VALUE, expectedLocation);
+        Location actualLocation = mTarget.readLastLocation();
+
+        // Assert
+        Assert.assertNotNull(actualLocation);
+    }
+
+    @Test
+    public void dbShouldNotReadLastLocation() throws Exception {
+
+        // Act
+        Location actualLocation = mTarget.readLastLocation();
+
+        // Assert
+        Assert.assertNull(actualLocation);
+    }
+
+    @Test
+    public void dbShouldNotContainLastLocation() throws Exception {
+
+        // Arrange
+        String provider = "harambeGPS";
+        double latitude = 80.909090;
+        double longitude = -100.219021;
+        Location location1 = new Location(provider);
+        location1.setLatitude(latitude);
+        location1.setLongitude(longitude);
+
+        latitude = 80.929292;
+        longitude = -100.424343;
+        Location location2 = new Location(provider);
+        location2.setLatitude(latitude);
+        location2.setLongitude(longitude);
+
+        // Act
+        mTarget.insertLastLocation(PositionTrackerSQLiteHelper.LAST_LOCATION_ID_VALUE, location1);
+        boolean containsLocation = mTarget.containsLocation(location2);
+
+        // Assert
+        Assert.assertFalse(containsLocation);
+    }
+
+    @Test
+    public void dbShouldContainLastLocation() throws Exception {
+
+        // Arrange
+        String provider = "harambeGPS";
+        double latitude = 80.909090;
+        double longitude = -100.219021;
+        Location location1 = new Location(provider);
+        location1.setLatitude(latitude);
+        location1.setLongitude(longitude);
+
+        Location location2 = new Location(provider);
+        location2.setLatitude(latitude);
+        location2.setLongitude(longitude);
+
+        // Act
+        mTarget.insertLastLocation(PositionTrackerSQLiteHelper.LAST_LOCATION_ID_VALUE, location1);
+        boolean containsLocation = mTarget.containsLocation(location2);
+
+        // Assert
+        Assert.assertTrue(containsLocation);
+    }
+
+    @Test
+    public void dbShouldUpdateLastLocation() throws Exception {
+
+        // Arrange
+        String provider = "harambeGPS";
+        double latitude = 80.909090;
+        double longitude = -100.219021;
+        Location location1 = new Location(provider);
+        location1.setLatitude(latitude);
+        location1.setLongitude(longitude);
+
+        latitude = 80.929292;
+        longitude = -100.424343;
+        Location location2 = new Location(provider);
+        location2.setLatitude(latitude);
+        location2.setLongitude(longitude);
+
+        // Act
+        mTarget.insertLastLocation(PositionTrackerSQLiteHelper.LAST_LOCATION_ID_VALUE, location1);
+        long affectedRow = mTarget.updateLastLocation(PositionTrackerSQLiteHelper.LAST_LOCATION_ID_VALUE, location2);
+        Location actualLocation = mTarget.readLastLocation();
+        // Assert
+        Assert.assertTrue(affectedRow == 1);
+        Assert.assertEquals(location2.getLatitude(), actualLocation.getLatitude());
+        Assert.assertEquals(location2.getLongitude(), actualLocation.getLongitude());
+        Assert.assertEquals(location2.getProvider(), actualLocation.getProvider());
     }
 
     private Date getDate(int year, int month, int day) {

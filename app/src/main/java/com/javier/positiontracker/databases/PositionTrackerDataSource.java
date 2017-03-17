@@ -5,6 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Address;
+import android.location.Location;
+import android.support.v7.widget.ThemedSpinnerAdapter;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.model.LocationAddress;
@@ -61,6 +63,7 @@ public class PositionTrackerDataSource {
         mDb.delete(PositionTrackerSQLiteHelper.LOCATION_TABLE, null, null);
         mDb.delete(PositionTrackerSQLiteHelper.TIME_LIMIT_TABLE, null, null);
         mDb.delete(PositionTrackerSQLiteHelper.LOCATION_ADDRESS_TABLE, null, null);
+        mDb.delete(PositionTrackerSQLiteHelper.LAST_LOCATION_TABLE, null, null);
 
         mDb.close();
     }
@@ -323,5 +326,106 @@ public class PositionTrackerDataSource {
 
         int index = cursor.getColumnIndex(column);
         return cursor.getString(index);
+    }
+
+    public long insertLastLocation(long id, Location location) {
+
+        mDb = mHelper.getWritableDatabase();
+        mDb.beginTransaction();
+
+        ContentValues values = new ContentValues();
+        values.put(PositionTrackerSQLiteHelper.LAST_LOCATION_ID, id);
+        values.put(PositionTrackerSQLiteHelper.LAST_LOCATION_LAT, location.getLatitude());
+        values.put(PositionTrackerSQLiteHelper.LAST_LOCATION_LONG, location.getLongitude());
+        values.put(PositionTrackerSQLiteHelper.LAST_LOCATION_PROVIDER, location.getProvider());
+
+        long rowId = mDb.insert(
+            PositionTrackerSQLiteHelper.LAST_LOCATION_TABLE,
+            null,
+            values
+        );
+
+        mDb.setTransactionSuccessful();
+        mDb.endTransaction();
+        mDb.close();
+
+        return rowId;
+    }
+
+    public Location readLastLocation() {
+
+        mDb = mHelper.getReadableDatabase();
+
+        Cursor cursor = mDb.query(
+            PositionTrackerSQLiteHelper.LAST_LOCATION_TABLE,
+            new String[]{
+                PositionTrackerSQLiteHelper.LAST_LOCATION_LAT,
+                PositionTrackerSQLiteHelper.LAST_LOCATION_LONG,
+                PositionTrackerSQLiteHelper.LAST_LOCATION_PROVIDER
+            },
+            null,null,null,null,null
+        );
+
+        if(cursor.moveToFirst()) {
+
+            double latitude = getDouble(cursor, PositionTrackerSQLiteHelper.LAST_LOCATION_LAT);
+            double longitude = getDouble(cursor, PositionTrackerSQLiteHelper.LAST_LOCATION_LONG);
+            String provider = getString(cursor, PositionTrackerSQLiteHelper.LAST_LOCATION_PROVIDER);
+
+            Location location = new Location(provider);
+            location.setLatitude(latitude);
+            location.setLongitude(longitude);
+            cursor.close();
+            return location;
+        }
+
+        cursor.close();
+        mDb.close();
+
+        return null;
+    }
+
+    public boolean containsLocation(Location location2) {
+
+        mDb = mHelper.getReadableDatabase();
+
+        Cursor cursor = mDb.query(
+            PositionTrackerSQLiteHelper.LAST_LOCATION_TABLE,
+            null,
+            PositionTrackerSQLiteHelper.LAST_LOCATION_LAT + "=? AND " + PositionTrackerSQLiteHelper.LAST_LOCATION_LONG + "=?",
+            new String[]{String.valueOf(location2.getLatitude()), String.valueOf(location2.getLongitude())},
+            null,null,null
+        );
+
+        boolean containsLocation = cursor.moveToFirst();
+        cursor.close();
+        mDb.close();
+
+        return containsLocation;
+    }
+
+    public long updateLastLocation(long lastLocationIdValue, Location location) {
+
+        mDb = mHelper.getWritableDatabase();
+        mDb.beginTransaction();
+        long affectedRow = -1;
+
+        ContentValues values = new ContentValues();
+        values.put(PositionTrackerSQLiteHelper.LAST_LOCATION_LAT, location.getLatitude());
+        values.put(PositionTrackerSQLiteHelper.LAST_LOCATION_LONG, location.getLongitude());
+        values.put(PositionTrackerSQLiteHelper.LAST_LOCATION_PROVIDER, location.getProvider());
+
+        affectedRow = mDb.update(
+            PositionTrackerSQLiteHelper.LAST_LOCATION_TABLE,
+            values,
+            PositionTrackerSQLiteHelper.LAST_LOCATION_ID + "=?",
+            new String[]{String.valueOf(lastLocationIdValue)}
+        );
+
+        mDb.setTransactionSuccessful();
+        mDb.endTransaction();
+        mDb.close();
+
+        return affectedRow;
     }
 }

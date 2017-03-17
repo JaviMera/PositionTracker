@@ -45,7 +45,6 @@ public class LocationsActivity extends AppCompatActivity
     @BindView(R.id.locationsRecyclerView)
     RecyclerView mRecyclerView;
 
-    private List<UserLocation> mLocations;
     private LocationsActivityPresenter mPresenter;
     private List<LocationAddress> mAddresses;
 
@@ -60,6 +59,8 @@ public class LocationsActivity extends AppCompatActivity
         mPresenter.initializeRecyclerView();
         mPresenter.initializeSpinnerView();
         mPresenter.initializeCheckBoxView();
+
+        mAddresses = new LinkedList<>();
     }
 
     @Override
@@ -130,14 +131,15 @@ public class LocationsActivity extends AppCompatActivity
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
 
+                mAddresses.clear();
+
                 PositionTrackerDataSource source = new PositionTrackerDataSource(LocationsActivity.this);
 
                 Long date = (Long) mSpinner.getAdapter().getItem(i);
-                mLocations = source.readLocationsWithRange(date, date);
+                List<UserLocation> locations = source.readLocationsWithRange(date, date);
                 LocationRecyclerAdapter adapter = (LocationRecyclerAdapter) mRecyclerView.getAdapter();
 
-                mAddresses = new LinkedList<>();
-                for(UserLocation location : mLocations) {
+                for(UserLocation location : locations) {
 
                     LocationAddress address = source.readLocationAddress(
                         location.getPosition().latitude,

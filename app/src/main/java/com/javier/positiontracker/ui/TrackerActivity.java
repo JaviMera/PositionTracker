@@ -1,22 +1,17 @@
 package com.javier.positiontracker.ui;
 
 import android.Manifest;
-import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
-import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -25,7 +20,6 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -39,7 +33,6 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.gson.Gson;
 import com.javier.positiontracker.R;
 import com.javier.positiontracker.TrackerService;
 import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
@@ -50,7 +43,6 @@ import com.javier.positiontracker.dialogs.DialogDateRange;
 import com.javier.positiontracker.dialogs.DialogNotification;
 import com.javier.positiontracker.dialogs.DialogViewNotification;
 import com.javier.positiontracker.model.TimeLimit;
-import com.javier.positiontracker.model.TrackerSharedPreferences;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.util.Date;
@@ -82,7 +74,6 @@ public class TrackerActivity extends AppCompatActivity
     private boolean mNotificationActive;
     private boolean mDisplayHomeEnabled;
     private TrackerActivityPresenter mPresenter;
-    private TrackerSharedPreferences mPreferences;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -303,8 +294,6 @@ public class TrackerActivity extends AppCompatActivity
         mMarkers = new LinkedList<>();
         mTimeLimitKey = getString(R.string.time_limit_key);
 
-        mPreferences = new TrackerSharedPreferences(this, getString(R.string.key_preferences));
-
         if(savedInstanceState != null && savedInstanceState.containsKey(mTimeLimitKey)) {
 
             mPresenter.setNotificationActive(true);
@@ -331,21 +320,6 @@ public class TrackerActivity extends AppCompatActivity
         }
 
         Intent intent = new Intent(this, TrackerService.class);
-
-        if(mCurrentLocation == null) {
-
-            String keyCurrentLocation = getString(R.string.key_current_location);
-            if(mPreferences.containsString(keyCurrentLocation)) {
-
-                mCurrentLocation = mPreferences.getString(keyCurrentLocation, Location.class);
-                mPreferences.removeString(keyCurrentLocation);
-            }
-        }
-
-        if (mCurrentLocation != null){
-
-            intent.putExtra(getString(R.string.key_current_location), mCurrentLocation);
-        }
 
         // Bind to TrackerService to store the location of the device periodically
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
@@ -387,7 +361,6 @@ public class TrackerActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mPreferences.putString(getString(R.string.key_current_location), mCurrentLocation);
     }
 
     @Override

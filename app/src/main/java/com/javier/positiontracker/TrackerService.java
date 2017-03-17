@@ -19,6 +19,7 @@ import com.javier.positiontracker.broadcastreceivers.BroadcastNotification;
 import com.javier.positiontracker.clients.GoogleClient;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
+import com.javier.positiontracker.databases.PositionTrackerSQLiteHelper;
 import com.javier.positiontracker.model.LocationAddress;
 import com.javier.positiontracker.model.LocationCounter;
 import com.javier.positiontracker.model.LocationNotification;
@@ -82,11 +83,16 @@ public class TrackerService extends Service
     @Override
     public IBinder onBind(Intent intent) {
 
-        if(intent.hasExtra("current_location")) {
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+        mLastLocation = source.readLastLocation();
 
-            mLastLocation = intent.getParcelableExtra("current_location");
-        }
         return mBinder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+
+        return super.onUnbind(intent);
     }
 
     @Override
@@ -229,6 +235,20 @@ public class TrackerService extends Service
 
         // Notify the activity, if any is listening, about a location change
         mBroadcastLocation.send(mLastLocation);
+
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+        if(source.readLastLocation() == null) {
+
+            source.insertLastLocation(
+                PositionTrackerSQLiteHelper.LAST_LOCATION_ID_VALUE,
+                mLastLocation);
+        }
+        else if(!source.containsLocation(mLastLocation)) {
+
+            source.updateLastLocation(
+                PositionTrackerSQLiteHelper.LAST_LOCATION_ID_VALUE,
+                mLastLocation);
+        }
     }
 
     public void trackTime(long time, long createdAt) {

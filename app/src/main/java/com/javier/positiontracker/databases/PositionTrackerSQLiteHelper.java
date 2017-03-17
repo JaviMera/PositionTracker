@@ -12,7 +12,8 @@ import android.provider.BaseColumns;
 public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
 
     public static final String POSITION_TRACKER_DB = "position_tracker.db";
-    public static final int VERSION = 8;
+    public static final int VERSION = 10;
+    public static final long LAST_LOCATION_ID_VALUE = 1;
 
     public static final String LOCATION_TABLE = "location";
     public static final String LOCATION_LAT = "latitude";
@@ -55,6 +56,21 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
         + "PRIMARY KEY (" + LOCATION_ADDRESS_LAT + ", " + LOCATION_ADDRESS_LONG + ")"
         +")";
 
+    public static final String LAST_LOCATION_TABLE = "last_location";
+    public static final String LAST_LOCATION_ID = "last_location_id";
+    public static final String LAST_LOCATION_PROVIDER = "provider";
+    public static final String LAST_LOCATION_LAT = "latitude";
+    public static final String LAST_LOCATION_LONG = "longitude";
+    private String CREATE_LAST_LOCATION_TABLE = "CREATE TABLE "
+        + LAST_LOCATION_TABLE
+        + "("
+        + LAST_LOCATION_ID + " INTEGER, "
+        + LAST_LOCATION_LAT + " REAL, "
+        + LAST_LOCATION_LONG + " REAL, "
+        + LAST_LOCATION_PROVIDER + " TEXT,"
+        + "PRIMARY KEY (" + LAST_LOCATION_ID + ")"
+        + ")";
+
     public PositionTrackerSQLiteHelper(Context context) {
         super(context, POSITION_TRACKER_DB, null, VERSION);
     }
@@ -65,6 +81,7 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
         sqLiteDatabase.execSQL(CREATE_LOCATION_TABLE);
         sqLiteDatabase.execSQL(CREATE_TIME_LIMIT_TABLE);
         sqLiteDatabase.execSQL(CREATE_LOCATION_ADDRESS_TABLE);
+        sqLiteDatabase.execSQL(CREATE_LAST_LOCATION_TABLE);
     }
 
     @Override
@@ -111,6 +128,15 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
 
             case 7:
                 sqLiteDatabase.execSQL(CREATE_LOCATION_ADDRESS_TABLE);
+                break;
+
+            case 8:
+                sqLiteDatabase.execSQL(CREATE_LAST_LOCATION_TABLE);
+                break;
+
+            case 9:
+                // re-create table with id column
+                sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + LAST_LOCATION_TABLE);
                 break;
         }
     }

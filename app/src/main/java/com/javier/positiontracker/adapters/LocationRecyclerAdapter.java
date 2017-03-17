@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import com.javier.positiontracker.R;
 import com.javier.positiontracker.model.LocationAddress;
-import com.javier.positiontracker.model.UserLocation;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -23,21 +22,24 @@ import java.util.Locale;
 public class LocationRecyclerAdapter extends RecyclerView.Adapter<LocationRecyclerAdapter.LocationViewHolder>{
 
     private Context mContext;
-    private List<LocationAddress> mLocations;
+    private List<LocationAddress> mAddresses;
     private boolean mEnabled;
 
     public LocationRecyclerAdapter(Context context) {
 
         mContext = context;
-        mLocations = new LinkedList<>();
+        mAddresses = new LinkedList<>();
         mEnabled = true;
     }
 
     public void setLocations(List<LocationAddress> locations) {
 
-        mLocations.clear();
-        mLocations.addAll(locations);
-        notifyItemRangeInserted(0, mLocations.size());
+        int count = mAddresses.size();
+        mAddresses.clear();
+        notifyItemRangeRemoved(0, count);
+
+        mAddresses.addAll(locations);
+        notifyItemRangeInserted(0, mAddresses.size());
     }
 
     @Override
@@ -53,19 +55,19 @@ public class LocationRecyclerAdapter extends RecyclerView.Adapter<LocationRecycl
     @Override
     public void onBindViewHolder(LocationViewHolder holder, int position) {
 
-        holder.bind(mLocations.get(position));
+        holder.bind(mAddresses.get(position));
     }
 
     @Override
     public int getItemCount() {
 
-        return mLocations.size();
+        return mAddresses.size();
     }
 
     public void setEnabled(boolean b) {
 
         mEnabled = b;
-        notifyItemRangeChanged(0, mLocations.size());
+        notifyItemRangeChanged(0, mAddresses.size());
     }
 
     class LocationViewHolder extends RecyclerView.ViewHolder {
