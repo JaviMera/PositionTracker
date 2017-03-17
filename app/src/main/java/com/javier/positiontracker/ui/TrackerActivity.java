@@ -49,16 +49,13 @@ import com.javier.positiontracker.dialogs.DateRangeListener;
 import com.javier.positiontracker.dialogs.DialogDateRange;
 import com.javier.positiontracker.dialogs.DialogNotification;
 import com.javier.positiontracker.dialogs.DialogViewNotification;
-import com.javier.positiontracker.io.FileManager;
 import com.javier.positiontracker.model.TimeLimit;
+import com.javier.positiontracker.model.TrackerSharedPreferences;
 import com.javier.positiontracker.model.UserLocation;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Handler;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -85,6 +82,7 @@ public class TrackerActivity extends AppCompatActivity
     private boolean mNotificationActive;
     private boolean mDisplayHomeEnabled;
     private TrackerActivityPresenter mPresenter;
+    private TrackerSharedPreferences mPreferences;
 
     private ServiceConnection mConnection = new ServiceConnection() {
         @Override
@@ -305,6 +303,8 @@ public class TrackerActivity extends AppCompatActivity
         mMarkers = new LinkedList<>();
         mTimeLimitKey = getString(R.string.time_limit_key);
 
+        mPreferences = new TrackerSharedPreferences(this, getString(R.string.key_preferences));
+
         if(savedInstanceState != null && savedInstanceState.containsKey(mTimeLimitKey)) {
 
             mPresenter.setNotificationActive(true);
@@ -335,12 +335,10 @@ public class TrackerActivity extends AppCompatActivity
         if(mCurrentLocation == null) {
 
             String keyCurrentLocation = getString(R.string.key_current_location);
-            Gson gson = new Gson();
-            SharedPreferences preferences = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
-            if(preferences.contains(keyCurrentLocation)) {
+            if(mPreferences.containsString(keyCurrentLocation)) {
 
-                String json = preferences.getString(keyCurrentLocation, "");
-                mCurrentLocation = gson.fromJson(json, Location.class);
+                mCurrentLocation = mPreferences.getString(keyCurrentLocation, Location.class);
+                mPreferences.removeString(keyCurrentLocation);
             }
         }
 
@@ -389,12 +387,7 @@ public class TrackerActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
-        Gson gson = new Gson();
-        getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE)
-            .edit()
-            .putString(getString(R.string.key_preferences), gson.toJson(mCurrentLocation))
-            .apply();
+        mPreferences.putString(getString(R.string.key_current_location), mCurrentLocation);
     }
 
     @Override
