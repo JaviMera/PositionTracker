@@ -40,7 +40,7 @@ import java.util.Locale;
 public class TrackerService extends Service
     implements com.javier.positiontracker.clients.LocationUpdate {
 
-    public static final float SMALLEST_DISTANCE = 50.0f;
+    public static final float SMALLEST_DISTANCE = 20.0f;
     private GoogleClient mClient;
     private Location mLastLocation;
     private IBinder mBinder;
@@ -192,6 +192,9 @@ public class TrackerService extends Service
                 )
                 .show();
             }
+
+            mLastLocation = location;
+
             // For every new location, reset the counter as the user has clearly started moving
             mLocationCounter.reset();
         }
@@ -230,8 +233,6 @@ public class TrackerService extends Service
                 }
             }
         }
-
-        mLastLocation = location;
 
         // Notify the activity, if any is listening, about a location change
         mBroadcastLocation.send(mLastLocation);
