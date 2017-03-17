@@ -8,7 +8,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -37,6 +39,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
 import com.javier.positiontracker.R;
 import com.javier.positiontracker.TrackerService;
 import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
@@ -122,7 +125,7 @@ public class TrackerActivity extends AppCompatActivity
     FloatingActionButton mLocationFab;
 
     private Marker mCurrentMarker;
-    private UserLocation mCurrentLocation;
+    private Location mCurrentLocation;
 
     private BroadcastReceiver mNewLocationReceiver = new BroadcastReceiver() {
 
@@ -141,7 +144,7 @@ public class TrackerActivity extends AppCompatActivity
                 mPresenter.setMarkerVisible(true);
             }
 
-            UserLocation location = intent.getParcelableExtra(BroadcastLocation.KEY);
+            Location location = intent.getParcelableExtra(BroadcastLocation.KEY);
 
             // Check if the incoming intent contains a valid new location
             if(location == null) {
@@ -154,8 +157,9 @@ public class TrackerActivity extends AppCompatActivity
                 return;
 
             mCurrentLocation = location;
+            LatLng currentLatLng = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
             MarkerOptions options = new MarkerOptions();
-            options.position(mCurrentLocation.getPosition());
+            options.position(currentLatLng);
             options.title(getString(R.string.marker_current_location));
 
             // Remove current marker from the map before assigning the new one
@@ -167,7 +171,7 @@ public class TrackerActivity extends AppCompatActivity
 
             // Create the new marker with the newest location
             mCurrentMarker = mMap.addMarker(options);
-            mPresenter.moveMapCamera(mCurrentLocation.getPosition());
+            mPresenter.moveMapCamera(currentLatLng);
             mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
         }
     };
@@ -328,6 +332,23 @@ public class TrackerActivity extends AppCompatActivity
 
         Intent intent = new Intent(this, TrackerService.class);
 
+        if(mCurrentLocation == null) {
+
+            String keyCurrentLocation = getString(R.string.key_current_location);
+            Gson gson = new Gson();
+            SharedPreferences preferences = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
+            if(preferences.contains(keyCurrentLocation)) {
+
+                String json = preferences.getString(keyCurrentLocation, "");
+                mCurrentLocation = gson.fromJson(json, Location.class);
+            }
+        }
+
+        if (mCurrentLocation != null){
+
+            intent.putExtra(getString(R.string.key_current_location), mCurrentLocation);
+        }
+
         // Bind to TrackerService to store the location of the device periodically
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
@@ -368,6 +389,12 @@ public class TrackerActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        Gson gson = new Gson();
+        getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE)
+            .edit()
+            .putString(getString(R.string.key_preferences), gson.toJson(mCurrentLocation))
+            .apply();
     }
 
     @Override

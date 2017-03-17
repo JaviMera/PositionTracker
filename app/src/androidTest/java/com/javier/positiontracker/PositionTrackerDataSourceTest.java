@@ -6,6 +6,7 @@ import android.support.test.runner.AndroidJUnit4;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
+import com.javier.positiontracker.model.LocationAddress;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
@@ -215,6 +216,43 @@ public class PositionTrackerDataSourceTest {
         // Assert
         Assert.assertNotNull(dates);
         Assert.assertEquals(2, dates.size());
+    }
+
+    @Test
+    public void dbShouldInsertLocationAddress() throws Exception {
+
+        // Arrange
+        double lat = 34.0000;
+        double longi = -100.0000;
+        String street = "harambe 404";
+        String area = "HEAVEN";
+        String postal = "666";
+        LocationAddress address = new LocationAddress(street, area, postal);
+
+        // Act
+        long rowId = mTarget.insertLocationAddress(lat, longi, address);
+
+        // Assert
+        Assert.assertTrue(rowId > -1);
+    }
+
+    @Test
+    public void dbShouldReadLocationAddress() throws Exception {
+
+        // Arrange
+        double lat = 34.0000;
+        double longi = -100.0000;
+        String street = "harambe 404";
+        String area = "HEAVEN";
+        String postal = "666";
+        LocationAddress expectedAddress = new LocationAddress(street, area, postal);
+
+        // Act
+        mTarget.insertLocationAddress(lat, longi, expectedAddress);
+        LocationAddress actualAddress = mTarget.readLocationAddress(lat, longi);
+
+        // Assert
+        Assert.assertTrue(expectedAddress.equals(actualAddress));
     }
 
     private Date getDate(int year, int month, int day) {

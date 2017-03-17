@@ -27,4 +27,6 @@
     <string name="locations_activity_button_text">Send</string>
     <string name="locations_activity_checkbox_text">Select All</string>
     <string name="locations_activity_title">Select locations by date</string>
+    <string name="key_preferences">com.javier.positiontracker.PREFERENCES</string>
+    <string name="key_current_location">current_location</string>
 </resources>

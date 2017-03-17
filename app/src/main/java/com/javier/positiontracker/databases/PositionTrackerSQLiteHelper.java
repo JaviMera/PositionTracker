@@ -12,7 +12,7 @@ import android.provider.BaseColumns;
 public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
 
     public static final String POSITION_TRACKER_DB = "position_tracker.db";
-    public static final int VERSION = 7;
+    public static final int VERSION = 8;
 
     public static final String LOCATION_TABLE = "location";
     public static final String LOCATION_LAT = "latitude";
@@ -25,18 +25,35 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
             + LOCATION_LAT + " REAL, "
             + LOCATION_LONG + " REAL, "
             + LOCATION_DATE + " INTEGER, "
-            + "PRIMARY KEY (" + LOCATION_LAT + ", " + LOCATION_LONG + ", " + LOCATION_DATE +")"
+            + "PRIMARY KEY (" + LOCATION_LAT + ", " + LOCATION_LONG + ", " + LOCATION_DATE + ")"
             + ")";
 
     public static final String TIME_LIMIT_TABLE = "time_limit";
     public static final String TIME_LIMIT_TIME = "time";
     public static final String TIME_LIMIT_CREATION_TIME = "created_at";
     private String CREATE_TIME_LIMIT_TABLE = "CREATE TABLE "
-        + TIME_LIMIT_TABLE
+            + TIME_LIMIT_TABLE
+            + "("
+            + TIME_LIMIT_TIME + " INTEGER, "
+            + TIME_LIMIT_CREATION_TIME + " INTEGER"
+            + ")";
+
+    public static final String LOCATION_ADDRESS_TABLE = "location_address";
+    public static final String LOCATION_ADDRESS_LAT = "latitude";
+    public static final String LOCATION_ADDRESS_LONG = "longitude";
+    public static final String LOCATION_ADDRESS_STREET = "street";
+    public static final String LOCATION_ADDRESS_AREA = "area";
+    public static final String LOCATION_ADDRESS_POSTAL = "postal";
+    private String CREATE_LOCATION_ADDRESS_TABLE = "CREATE TABLE "
+        + LOCATION_ADDRESS_TABLE
         + "("
-        + TIME_LIMIT_TIME + " INTEGER, "
-        + TIME_LIMIT_CREATION_TIME + " INTEGER"
-        + ")";
+        + LOCATION_ADDRESS_LAT + " REAL, "
+        + LOCATION_ADDRESS_LONG + " REAL, "
+        + LOCATION_ADDRESS_STREET + " TEXT, "
+        + LOCATION_ADDRESS_AREA + " TEXT, "
+        + LOCATION_ADDRESS_POSTAL + " TEXT, "
+        + "PRIMARY KEY (" + LOCATION_ADDRESS_LAT + ", " + LOCATION_ADDRESS_LONG + ")"
+        +")";
 
     public PositionTrackerSQLiteHelper(Context context) {
         super(context, POSITION_TRACKER_DB, null, VERSION);
@@ -47,6 +64,7 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
 
         sqLiteDatabase.execSQL(CREATE_LOCATION_TABLE);
         sqLiteDatabase.execSQL(CREATE_TIME_LIMIT_TABLE);
+        sqLiteDatabase.execSQL(CREATE_LOCATION_ADDRESS_TABLE);
     }
 
     @Override
@@ -89,6 +107,10 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
             case 6:
                 // Drop table after creating compound key with lat long and date
                 sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
+                break;
+
+            case 7:
+                sqLiteDatabase.execSQL(CREATE_LOCATION_ADDRESS_TABLE);
                 break;
         }
     }

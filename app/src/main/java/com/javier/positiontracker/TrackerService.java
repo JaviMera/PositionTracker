@@ -4,11 +4,14 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.broadcastreceivers.BroadcastBase;
@@ -16,14 +19,18 @@ import com.javier.positiontracker.broadcastreceivers.BroadcastNotification;
 import com.javier.positiontracker.clients.GoogleClient;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
+import com.javier.positiontracker.model.LocationAddress;
 import com.javier.positiontracker.model.LocationCounter;
 import com.javier.positiontracker.model.LocationNotification;
 import com.javier.positiontracker.model.LocationThreshold;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
+import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Created by javie on 2/24/2017.
@@ -38,10 +45,10 @@ public class TrackerService extends Service
     private IBinder mBinder;
     private BroadcastBase mBroadcastLocation;
     private BroadcastBase mBroadcastNotification;
-
     private LocationThreshold mLocationThreshold;
     private LocationCounter mLocationCounter;
     private LocationNotification mLocationNotification;
+    private Geocoder mGeocoder;
 
     @Override
     public void onCreate() {
@@ -57,6 +64,7 @@ public class TrackerService extends Service
 
         mLocationThreshold = new LocationThreshold();
         mLocationCounter = new LocationCounter();
+        mGeocoder = new Geocoder(this, Locale.getDefault());
     }
 
     @Override
@@ -74,6 +82,10 @@ public class TrackerService extends Service
     @Override
     public IBinder onBind(Intent intent) {
 
+        if(intent.hasExtra("current_location")) {
+
+            mLastLocation = intent.getParcelableExtra("current_location");
+        }
         return mBinder;
     }
 
@@ -138,19 +150,42 @@ public class TrackerService extends Service
             distance = mLastLocation.distanceTo(location);
         }
 
-        UserLocation newLocation = createUserLocation(location);
-
-        // Notify the activity, if any is listening, about a location change
-        mBroadcastLocation.send(newLocation);
-
         // Check if the new location is considered a new location based on the distance between
         // last location and new location
-
         if(distance >= SMALLEST_DISTANCE || mLastLocation == null) {
 
+            UserLocation newLocation = createUserLocation(location);
             PositionTrackerDataSource source = new PositionTrackerDataSource(this);
             source.insertUserLocation(newLocation);
 
+            double latitude = newLocation.getPosition().latitude;
+            double longitude = newLocation.getPosition().longitude;
+
+            try {
+                List<Address> addresses = mGeocoder.getFromLocation(
+                    latitude,
+                    longitude,
+                    1
+                );
+
+                LocationAddress locationAddress = new LocationAddress(
+                    addresses.get(0).getThoroughfare(),
+                    addresses.get(0).getAdminArea(),
+                    addresses.get(0).getPostalCode()
+                );
+                long rowId = source.insertLocationAddress(latitude, longitude, locationAddress);
+
+                Toast.makeText(this, String.valueOf(rowId), Toast.LENGTH_LONG).show();
+            }
+            catch(IOException ex) {
+
+                Toast.makeText(
+                    this,
+                    "GPS is off. Please turn it on to retrieve location updates.",
+                    Toast.LENGTH_LONG
+                )
+                .show();
+            }
             // For every new location, reset the counter as the user has clearly started moving
             mLocationCounter.reset();
         }
@@ -191,6 +226,9 @@ public class TrackerService extends Service
         }
 
         mLastLocation = location;
+
+        // Notify the activity, if any is listening, about a location change
+        mBroadcastLocation.send(mLastLocation);
     }
 
     public void trackTime(long time, long createdAt) {

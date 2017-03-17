@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.javier.positiontracker.R;
+import com.javier.positiontracker.model.LocationAddress;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.util.LinkedList;
@@ -22,7 +23,7 @@ import java.util.Locale;
 public class LocationRecyclerAdapter extends RecyclerView.Adapter<LocationRecyclerAdapter.LocationViewHolder>{
 
     private Context mContext;
-    private List<UserLocation> mLocations;
+    private List<LocationAddress> mLocations;
     private boolean mEnabled;
 
     public LocationRecyclerAdapter(Context context) {
@@ -32,7 +33,7 @@ public class LocationRecyclerAdapter extends RecyclerView.Adapter<LocationRecycl
         mEnabled = true;
     }
 
-    public void setLocations(List<UserLocation> locations) {
+    public void setLocations(List<LocationAddress> locations) {
 
         mLocations.clear();
         mLocations.addAll(locations);
@@ -78,13 +79,11 @@ public class LocationRecyclerAdapter extends RecyclerView.Adapter<LocationRecycl
             mLocationTextView = (TextView) itemView.findViewById(R.id.locationTextView);
         }
 
-        void bind(UserLocation userLocation) {
+        void bind(LocationAddress locationAddress) {
 
             mLocationTextView.setText(
                 String.format(Locale.ENGLISH,
-                    "Lat: %f Long: %f",
-                    userLocation.getPosition().latitude,
-                    userLocation.getPosition().longitude
+                    locationAddress.getStreet() + ", " + locationAddress.getArea() + ", " + locationAddress.getPostal()
                 )
             );
 

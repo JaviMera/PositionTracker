@@ -24,6 +24,7 @@ import com.javier.positiontracker.adapters.LocationRecyclerAdapter;
 import com.javier.positiontracker.adapters.RecyclerLinearLayout;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.io.FileManager;
+import com.javier.positiontracker.model.LocationAddress;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.io.File;
@@ -139,7 +140,17 @@ public class LocationsActivity extends AppCompatActivity
                 mLocations = source.readLocationsWithRange(date, date);
                 LocationRecyclerAdapter adapter = (LocationRecyclerAdapter) mRecyclerView.getAdapter();
 
-                adapter.setLocations(mLocations);
+                List<LocationAddress> addresses = new LinkedList<>();
+                for(UserLocation location : mLocations) {
+
+                    LocationAddress address = source.readLocationAddress(
+                        location.getPosition().latitude,
+                        location.getPosition().longitude
+                    );
+                    addresses.add(address);
+                }
+
+                adapter.setLocations(addresses);
             }
 
             @Override
