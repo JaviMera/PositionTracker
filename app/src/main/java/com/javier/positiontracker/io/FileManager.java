@@ -1,9 +1,11 @@
 package com.javier.positiontracker.io;
 
 import android.content.Context;
+import android.location.Location;
 import android.os.Environment;
 
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
+import com.javier.positiontracker.model.LocationAddress;
 import com.javier.positiontracker.model.UserLocation;
 
 import java.io.File;
@@ -31,7 +33,7 @@ public class FileManager {
         return documentsDir.exists() || documentsDir.mkdir();
     }
 
-    public File createFile(String directory, String fileName, List<UserLocation> data) throws IOException {
+    public File createFile(String directory, String fileName, List<LocationAddress> data) throws IOException {
 
         File file = new File(mStorage + "/" + directory + "/" + fileName);
         FileWriter writer;
@@ -39,7 +41,7 @@ public class FileManager {
 
             writer = new FileWriter(file);
 
-            for(UserLocation location : data) {
+            for(LocationAddress location : data) {
 
                 writer.append(location.toString());
             }

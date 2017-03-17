@@ -1,14 +1,11 @@
 package com.javier.positiontracker.ui;
 
-import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.AdapterView;
@@ -29,8 +26,6 @@ import com.javier.positiontracker.model.UserLocation;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -52,6 +47,7 @@ public class LocationsActivity extends AppCompatActivity
 
     private List<UserLocation> mLocations;
     private LocationsActivityPresenter mPresenter;
+    private List<LocationAddress> mAddresses;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,17 +136,17 @@ public class LocationsActivity extends AppCompatActivity
                 mLocations = source.readLocationsWithRange(date, date);
                 LocationRecyclerAdapter adapter = (LocationRecyclerAdapter) mRecyclerView.getAdapter();
 
-                List<LocationAddress> addresses = new LinkedList<>();
+                mAddresses = new LinkedList<>();
                 for(UserLocation location : mLocations) {
 
                     LocationAddress address = source.readLocationAddress(
                         location.getPosition().latitude,
                         location.getPosition().longitude
                     );
-                    addresses.add(address);
+                    mAddresses.add(address);
                 }
 
-                adapter.setLocations(addresses);
+                adapter.setLocations(mAddresses);
             }
 
             @Override
@@ -188,13 +184,13 @@ public class LocationsActivity extends AppCompatActivity
                     if(mCheckBox.isChecked()) {
 
                         PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-                        mLocations = source.readAllLocations();
+//                        mAddresses = source.readAllAddresses();
                     }
 
                     File file = fileManager.createFile(
                         Environment.DIRECTORY_DOCUMENTS,
                         getString(R.string.locations_file_name),
-                        mLocations
+                        mAddresses
                     );
 
                     Intent emailIntent = getEmailIntent(file);

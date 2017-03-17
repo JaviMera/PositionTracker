@@ -60,4 +60,10 @@ public class LocationAddress {
     public String getPostal() {
         return mPostal;
     }
+
+    @Override
+    public String toString() {
+
+        return mStreet + ", " + mArea + ", " + mPostal;
+    }
 }
