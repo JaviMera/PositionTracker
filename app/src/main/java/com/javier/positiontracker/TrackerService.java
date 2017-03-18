@@ -115,6 +115,17 @@ public class TrackerService extends Service
         }
     }
 
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+
+        // Disconnect from google client when the user has killed the app by swiping it to
+        // the left
+        stopTracking();
+
+        // Kill the service when the user has killed the app by swiping it to the left
+        stopSelf();
+    }
+
     public void stopTracking() {
 
         mClient.disconnect();
@@ -150,6 +161,7 @@ public class TrackerService extends Service
             PositionTrackerDataSource source = new PositionTrackerDataSource(this);
             source.insertUserLocation(newLocation);
 
+            // Save the new location
             mLastLocation = location;
 
             // For every new location, reset the counter as the user has clearly started moving

@@ -30,7 +30,8 @@
         <service
             android:name=".TrackerService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:stopWithTask="false"/>
 
         <receiver android:name=".broadcastreceivers.BroadcastBoot">
             <intent-filter>
