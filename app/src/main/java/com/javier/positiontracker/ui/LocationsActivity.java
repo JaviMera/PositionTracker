@@ -144,33 +144,31 @@ public class LocationsActivity extends AppCompatActivity
                 try {
                     mAddresses.clear();
 
-                    PositionTrackerDataSource source = new PositionTrackerDataSource(LocationsActivity.this);
-
                     Long date = (Long) mSpinner.getAdapter().getItem(i);
-                    List<UserLocation> locations = source.readLocationsWithRange(date, date);
-                    LocationRecyclerAdapter adapter = (LocationRecyclerAdapter) mRecyclerView.getAdapter();
+                    List<UserLocation> locations = getLocations(date);
 
                     for(UserLocation location : locations) {
 
-                        LocationAddress address = mCache.get(location.getPosition());
-                        if(address == null) {
+                        // Get a location address from cache object
+                        LocationAddress locationAddress = mCache.get(location.getPosition());
 
-                            List<Address> geoAddress = mGeocoder.getFromLocation(
-                                location.getPosition().latitude,
-                                location.getPosition().longitude,
-                                1
-                            );
+                        // Check if location address does not exist in cache
+                        if(locationAddress == null) {
 
-                            address = new LocationAddress(
-                                geoAddress.get(0), location.getHour(), location.getMinute()
-                            );
+                            // Create location address if it doesnt exist in cache
+                            locationAddress = createLocationAddress(location);
 
-                            mCache.insert(location.getPosition(), address);
+                            // Store location address in cache to later retrieve it
+                            mCache.insert(location.getPosition(), locationAddress);
                         }
 
-                        mAddresses.add(address);
+                        // Add location address to list of addresses
+                        mAddresses.add(locationAddress);
                     }
 
+                    LocationRecyclerAdapter adapter = getRecyclerAdapter();
+
+                    // Initialize the adapter with the new list of addresses
                     adapter.setLocations(mAddresses);
                 }
                 catch(IOException ex) {
@@ -190,6 +188,35 @@ public class LocationsActivity extends AppCompatActivity
         };
     }
 
+    private LocationRecyclerAdapter getRecyclerAdapter() {
+
+        return (LocationRecyclerAdapter) mRecyclerView.getAdapter();
+    }
+
+    private List<UserLocation> getLocations(long date) {
+
+        PositionTrackerDataSource source = new PositionTrackerDataSource(LocationsActivity.this);
+        return source.readLocationsWithRange(date, date);
+    }
+
+    private Address getGeoAddress(UserLocation location) throws IOException{
+
+        return mGeocoder.getFromLocation(
+            location.getPosition().latitude,
+            location.getPosition().longitude,
+            1
+        )
+        .get(0);
+    }
+
+    private LocationAddress createLocationAddress(UserLocation location) throws IOException {
+
+        return new LocationAddress(
+            getGeoAddress(location),
+            location.getHour(),
+            location.getMinute()
+        );
+    }
     private CompoundButton.OnCheckedChangeListener getCheckBoxListener() {
 
         return new CompoundButton.OnCheckedChangeListener() {
