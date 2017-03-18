@@ -14,16 +14,22 @@ public class UserLocation implements Parcelable{
 
     private LatLng mLatLong;
     private long mDate;
+    private int mMinute;
+    private int mHour;
 
-    public UserLocation(LatLng latLng, long date) {
+    public UserLocation(LatLng latLng, long date, int hour, int minute) {
 
         mLatLong = latLng;
         mDate = date;
+        mHour = hour;
+        mMinute = minute;
     }
 
     private UserLocation(Parcel in) {
         mLatLong = in.readParcelable(LatLng.class.getClassLoader());
         mDate = in.readLong();
+        mHour = in.readInt();
+        mMinute = in.readInt();
     }
 
     public static final Creator<UserLocation> CREATOR = new Creator<UserLocation>() {
@@ -81,14 +87,17 @@ public class UserLocation implements Parcelable{
 
         parcel.writeParcelable(mLatLong, i);
         parcel.writeLong(mDate);
+        parcel.writeInt(mHour);
+        parcel.writeInt(mMinute);
     }
 
-    @Override
-    public String toString() {
+    public int getHour() {
 
-        return String.format(
-            "Latitude: %f\r\nLongitude: %f\r\n\r\n\r\n",
-            mLatLong.latitude,
-            mLatLong.longitude);
+        return mHour;
+    }
+
+    public int getMinute() {
+
+        return mMinute;
     }
 }

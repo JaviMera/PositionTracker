@@ -145,6 +145,9 @@ public class LocationsActivity extends AppCompatActivity
                         location.getPosition().latitude,
                         location.getPosition().longitude
                     );
+
+                    address.setHour(location.getHour());
+                    address.setMinute(location.getMinute());
                     mAddresses.add(address);
                 }
 

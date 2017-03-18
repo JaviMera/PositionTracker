@@ -85,7 +85,7 @@ public class LocationRecyclerAdapter extends RecyclerView.Adapter<LocationRecycl
 
             mLocationTextView.setText(
                 String.format(Locale.ENGLISH,
-                    locationAddress.getStreet() + ", " + locationAddress.getArea() + ", " + locationAddress.getPostal()
+                    locationAddress.toString()
                 )
             );
 

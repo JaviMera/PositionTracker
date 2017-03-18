@@ -138,11 +138,30 @@ public class TrackerService extends Service
         return calendar.getTime().getTime();
     }
 
+    private int getCurrentHour(Date date) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+
+        return calendar.get(Calendar.HOUR_OF_DAY);
+    }
+
+    private int getCurrentMinute(Date date) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+
+        return calendar.get(Calendar.MINUTE);
+    }
+
     private UserLocation createUserLocation(Location location) {
 
+        Date date = new Date();
         return new UserLocation(
             new LatLng(location.getLatitude(), location.getLongitude()),
-            getCurrentDateInMilliseconds(new Date())
+            getCurrentDateInMilliseconds(date),
+            getCurrentHour(date),
+            getCurrentMinute(date)
         );
     }
 

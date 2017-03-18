@@ -1,5 +1,7 @@
 package com.javier.positiontracker;
 
+import android.support.v7.widget.MenuItemHoverListener;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.model.UserLocation;
 
@@ -21,16 +23,22 @@ public class UserLocationTest {
     private UserLocation mTarget;
     private LatLng mLatLong;
     private long mDate;
+    private int mHour;
+    private int mMinute;
 
     @Before
     public void setUp() throws Exception {
 
         mLatLong = new LatLng(1000, -2000);
         mDate = new Date().getTime();
+        mHour = 10;
+        mMinute = 20;
 
         mTarget = new UserLocation(
             mLatLong,
-            mDate
+            mDate,
+            mHour,
+            mMinute
         );
     }
 
@@ -49,6 +57,19 @@ public class UserLocationTest {
         Assert.assertEquals(mDate, mTarget.getDate());
     }
 
+    @Test
+    public void getHour() throws Exception {
+
+        // Assert
+        Assert.assertEquals(mHour, mTarget.getHour());
+    }
+
+    @Test
+    public void getMinute() throws Exception {
+
+        // Assert
+        Assert.assertEquals(mMinute, mTarget.getMinute());
+    }
 
     @Test
     public void nullLocationReturnFalse() throws Exception {
@@ -77,7 +98,7 @@ public class UserLocationTest {
     public void sameLocationReturnTrue() throws Exception {
 
         // Arrange
-        UserLocation userLocation = new UserLocation(mLatLong, mDate);
+        UserLocation userLocation = new UserLocation(mLatLong, mDate,10,24);
 
         // Act
         boolean sameLocations = mTarget.equals(userLocation);
@@ -91,28 +112,13 @@ public class UserLocationTest {
     public void differentLocationReturnFalse() throws Exception {
 
         // Arrange
-        UserLocation location = new UserLocation(new LatLng(100, 120), System.currentTimeMillis());
+        UserLocation location = new UserLocation(new LatLng(100, 120), System.currentTimeMillis(),
+            10,24);
 
         // Act
         boolean sameLocation = mTarget.equals(location);
 
         // Assert
         Assert.assertFalse(sameLocation);
-    }
-
-    @Test
-    public void locationToString() throws Exception {
-
-        // Arrange
-        String expectedText = String.format(
-            "Latitude: %f\r\nLongitude: %f\r\n\r\n\r\n",
-            mLatLong.latitude,
-            mLatLong.longitude);;
-
-        // Act
-        String actualText = mTarget.toString();
-
-        // Assert
-        Assert.assertEquals(expectedText, actualText);
     }
 }

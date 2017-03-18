@@ -11,6 +11,8 @@ public class LocationAddress {
     private String mStreet;
     private String mArea;
     private String mPostal;
+    private int mHour;
+    private int mMinute;
 
     public LocationAddress(String street, String area, String postal) {
 
@@ -64,6 +66,16 @@ public class LocationAddress {
     @Override
     public String toString() {
 
-        return mStreet + ", " + mArea + ", " + mPostal;
+        return mStreet + ", " + mArea + ", " + mPostal + " at  " + mHour + ":" + mMinute;
+    }
+
+    public void setHour(int hour) {
+
+        mHour = hour;
+    }
+
+    public void setMinute(int minute) {
+        
+        mMinute = minute;
     }
 }

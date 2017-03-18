@@ -12,20 +12,23 @@ import android.provider.BaseColumns;
 public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
 
     public static final String POSITION_TRACKER_DB = "position_tracker.db";
-    public static final int VERSION = 10;
+    public static final int VERSION = 12;
     public static final long LAST_LOCATION_ID_VALUE = 1;
 
     public static final String LOCATION_TABLE = "location";
     public static final String LOCATION_LAT = "latitude";
     public static final String LOCATION_LONG = "longitude";
     public static final String LOCATION_DATE = "date";
-
+    public static final String LOCATION_HOUR = "hour";
+    public static final String LOCATION_MINUTE = "minute";
     private String CREATE_LOCATION_TABLE = "CREATE TABLE "
             + LOCATION_TABLE
             + "("
             + LOCATION_LAT + " REAL, "
             + LOCATION_LONG + " REAL, "
             + LOCATION_DATE + " INTEGER, "
+            + LOCATION_HOUR + " INTEGER, "
+            + LOCATION_MINUTE + " INTEGER, "
             + "PRIMARY KEY (" + LOCATION_LAT + ", " + LOCATION_LONG + ", " + LOCATION_DATE + ")"
             + ")";
 
@@ -137,6 +140,12 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
             case 9:
                 // re-create table with id column
                 sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + LAST_LOCATION_TABLE);
+                break;
+
+            case 10:
+            case 11:
+                // re-create table with hour and minute columns
+                sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
                 break;
         }
     }

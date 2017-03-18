@@ -39,6 +39,8 @@ public class PositionTrackerDataSource {
         values.put(PositionTrackerSQLiteHelper.LOCATION_LAT, location.getPosition().latitude);
         values.put(PositionTrackerSQLiteHelper.LOCATION_LONG, location.getPosition().longitude);
         values.put(PositionTrackerSQLiteHelper.LOCATION_DATE, location.getDate());
+        values.put(PositionTrackerSQLiteHelper.LOCATION_HOUR, location.getHour());
+        values.put(PositionTrackerSQLiteHelper.LOCATION_MINUTE, location.getMinute());
 
         long rowId = mDb.insert(
             PositionTrackerSQLiteHelper.LOCATION_TABLE,
@@ -80,6 +82,8 @@ public class PositionTrackerDataSource {
                 PositionTrackerSQLiteHelper.LOCATION_LAT,
                 PositionTrackerSQLiteHelper.LOCATION_LONG,
                 PositionTrackerSQLiteHelper.LOCATION_DATE,
+                PositionTrackerSQLiteHelper.LOCATION_HOUR,
+                PositionTrackerSQLiteHelper.LOCATION_MINUTE
             },
             PositionTrackerSQLiteHelper.LOCATION_DATE + " BETWEEN ? AND ?",
             new String[]{String.valueOf(minDate), String.valueOf(maxDate)},
@@ -93,8 +97,16 @@ public class PositionTrackerDataSource {
                 double latitude = getDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LAT);
                 double longitude = getDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LONG);
                 long date = getLong(cursor, PositionTrackerSQLiteHelper.LOCATION_DATE);
+                int hour = getInt(cursor, PositionTrackerSQLiteHelper.LOCATION_HOUR);
+                int minute = getInt(cursor, PositionTrackerSQLiteHelper.LOCATION_MINUTE);
 
-                UserLocation location = new UserLocation(new LatLng(latitude, longitude), date);
+                UserLocation location = new UserLocation(
+                    new LatLng(latitude, longitude),
+                    date,
+                    hour,
+                    minute
+                );
+
                 locations.add(location);
 
             }while(cursor.moveToNext());
@@ -105,6 +117,12 @@ public class PositionTrackerDataSource {
         mDb.close();
 
         return locations;
+    }
+
+    private int getInt(Cursor cursor, String column) {
+
+        int index = cursor.getColumnIndex(column);
+        return cursor.getInt(index);
     }
 
     private long getLong(Cursor cursor, String column) {
@@ -201,7 +219,9 @@ public class PositionTrackerDataSource {
             new String[]{
                 PositionTrackerSQLiteHelper.LOCATION_LAT,
                 PositionTrackerSQLiteHelper.LOCATION_LONG,
-                PositionTrackerSQLiteHelper.LOCATION_DATE
+                PositionTrackerSQLiteHelper.LOCATION_DATE,
+                PositionTrackerSQLiteHelper.LOCATION_HOUR,
+                PositionTrackerSQLiteHelper.LOCATION_MINUTE
             },
             null,
             null,
@@ -217,10 +237,14 @@ public class PositionTrackerDataSource {
                 double latitude = getDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LAT);
                 double longitude = getDouble(cursor, PositionTrackerSQLiteHelper.LOCATION_LONG);
                 long date = getLong(cursor, PositionTrackerSQLiteHelper.LOCATION_DATE);
+                int hour = getInt(cursor, PositionTrackerSQLiteHelper.LOCATION_HOUR);
+                int minute = getInt(cursor, PositionTrackerSQLiteHelper.LOCATION_MINUTE);
 
                 UserLocation location = new UserLocation(
                     new LatLng(latitude, longitude),
-                    date
+                    date,
+                    hour,
+                    minute
                 );
 
                 locations.add(location);

@@ -56,8 +56,18 @@ public class PositionTrackerDataSourceTest {
 
         // Arrange
         LatLng latLng = new LatLng(65.89, -110.0000);
-        long date = new Date().getTime();
-        UserLocation location = new UserLocation(latLng, date);
+        Date date = new Date();
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        UserLocation location = new UserLocation(
+            latLng,
+            date.getTime(),
+            hour,
+            minute);
 
         // Act
         long rowId = mTarget.insertUserLocation(location);
@@ -74,18 +84,25 @@ public class PositionTrackerDataSourceTest {
         Date date1 = getDate(2017, Calendar.JANUARY, 1);
         Date date2 = getDate(2017, Calendar.JANUARY, 25);
         Date date3 = getDate(2017, Calendar.FEBRUARY, 15);
-        int expectedSize = 2;
+        Date date = new Date();
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
 
         // Act
-        mTarget.insertUserLocation(new UserLocation(new LatLng(14, 100), date1.getTime()));
-        mTarget.insertUserLocation(new UserLocation(new LatLng(56, -140), date2.getTime()));
-        mTarget.insertUserLocation(new UserLocation(new LatLng(24, 84), date3.getTime()));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(14, 100), date1.getTime(), hour, minute));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(56, -140), date2.getTime(), hour, minute));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(24, 84), date3.getTime(), hour, minute));
 
         List<UserLocation> locations = mTarget.readAllLocations();
 
         // Assert
         Assert.assertNotNull(locations);
         Assert.assertEquals(3, locations.size());
+        Assert.assertEquals(locations.get(0).getHour(), hour);
+        Assert.assertEquals(locations.get(0).getMinute(), minute);
     }
 
     @Test
@@ -97,10 +114,17 @@ public class PositionTrackerDataSourceTest {
         Date date3 = getDate(2017, Calendar.FEBRUARY, 15);
         int expectedSize = 2;
 
+        Date date = new Date();
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
         // Act
-        mTarget.insertUserLocation(new UserLocation(new LatLng(14, 100), date1.getTime()));
-        mTarget.insertUserLocation(new UserLocation(new LatLng(56, -140), date2.getTime()));
-        mTarget.insertUserLocation(new UserLocation(new LatLng(24, 84), date3.getTime()));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(14, 100), date1.getTime(), hour, minute));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(56, -140), date2.getTime(), hour, minute));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(24, 84), date3.getTime(), hour, minute));
 
         Date minDate = getDate(2017, Calendar.JANUARY, 24);
         Date maxDate = getDate(2017, Calendar.FEBRUARY, 24);
@@ -121,10 +145,17 @@ public class PositionTrackerDataSourceTest {
         Date date3 = getDate(2017, Calendar.FEBRUARY, 15);
         int expectedSize = 0;
 
+        Date date = new Date();
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
         // Act
-        mTarget.insertUserLocation(new UserLocation(new LatLng(14, 100), date1.getTime()));
-        mTarget.insertUserLocation(new UserLocation(new LatLng(56, -140), date2.getTime()));
-        mTarget.insertUserLocation(new UserLocation(new LatLng(24, 84), date3.getTime()));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(14, 100), date1.getTime(), hour, minute));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(56, -140), date2.getTime(), hour, minute));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(24, 84), date3.getTime(), hour, minute));
 
         Date minDate = getDate(2017, Calendar.JANUARY, 26);
         Date maxDate = getDate(2017, Calendar.FEBRUARY, 14);
@@ -206,13 +237,17 @@ public class PositionTrackerDataSourceTest {
         Date date2 = getDate(2016, Calendar.JANUARY, 1);
         Date date3 = getDate(2017, Calendar.JANUARY, 1);
 
+        Date date = new Date();
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
         // Act
-        long d1 = date1.getTime();
-        long d2 = date2.getTime();
-        long d3 = date3.getTime();
-        mTarget.insertUserLocation(new UserLocation(new LatLng(14, 100), d1));
-        mTarget.insertUserLocation(new UserLocation(new LatLng(56, -140), d2));
-        mTarget.insertUserLocation(new UserLocation(new LatLng(24, 84), d3));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(14, 100), date1.getTime(), hour, minute));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(56, -140), date2.getTime(), hour, minute));
+        mTarget.insertUserLocation(new UserLocation(new LatLng(24, 84), date3.getTime(), hour, minute));
         List<Long> dates = mTarget.readAllDates();
 
         // Assert
