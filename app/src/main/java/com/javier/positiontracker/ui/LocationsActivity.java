@@ -23,6 +23,7 @@ import com.javier.positiontracker.adapters.LocationRecyclerAdapter;
 import com.javier.positiontracker.adapters.RecyclerLinearLayout;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.io.FileManager;
+import com.javier.positiontracker.model.AddressCache;
 import com.javier.positiontracker.model.LocationAddress;
 import com.javier.positiontracker.model.UserLocation;
 
@@ -51,6 +52,7 @@ public class LocationsActivity extends AppCompatActivity
     private LocationsActivityPresenter mPresenter;
     private List<LocationAddress> mAddresses;
     private Geocoder mGeocoder;
+    private AddressCache mCache;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +68,9 @@ public class LocationsActivity extends AppCompatActivity
 
         mAddresses = new LinkedList<>();
         mGeocoder = new Geocoder(this, Locale.getDefault());
+
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+        mCache = new AddressCache(maxMemory);
     }
 
     @Override
@@ -147,15 +152,22 @@ public class LocationsActivity extends AppCompatActivity
 
                     for(UserLocation location : locations) {
 
-                        List<Address> geoAddress = mGeocoder.getFromLocation(
-                            location.getPosition().latitude,
-                            location.getPosition().longitude,
-                            1
-                        );
+                        LocationAddress address = mCache.get(location.getPosition());
+                        if(address == null) {
 
-                        LocationAddress address = new LocationAddress(
-                            geoAddress.get(0), location.getHour(), location.getMinute()
-                        );
+                            List<Address> geoAddress = mGeocoder.getFromLocation(
+                                location.getPosition().latitude,
+                                location.getPosition().longitude,
+                                1
+                            );
+
+                            address = new LocationAddress(
+                                geoAddress.get(0), location.getHour(), location.getMinute()
+                            );
+
+                            mCache.insert(location.getPosition(), address);
+                        }
+
                         mAddresses.add(address);
                     }
 
