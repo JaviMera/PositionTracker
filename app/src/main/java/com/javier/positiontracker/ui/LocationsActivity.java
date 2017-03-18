@@ -2,6 +2,8 @@ package com.javier.positiontracker.ui;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -28,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -47,6 +50,7 @@ public class LocationsActivity extends AppCompatActivity
 
     private LocationsActivityPresenter mPresenter;
     private List<LocationAddress> mAddresses;
+    private Geocoder mGeocoder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +65,7 @@ public class LocationsActivity extends AppCompatActivity
         mPresenter.initializeCheckBoxView();
 
         mAddresses = new LinkedList<>();
+        mGeocoder = new Geocoder(this, Locale.getDefault());
     }
 
     @Override
@@ -131,27 +136,40 @@ public class LocationsActivity extends AppCompatActivity
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
 
-                mAddresses.clear();
+                try {
+                    mAddresses.clear();
 
-                PositionTrackerDataSource source = new PositionTrackerDataSource(LocationsActivity.this);
+                    PositionTrackerDataSource source = new PositionTrackerDataSource(LocationsActivity.this);
 
-                Long date = (Long) mSpinner.getAdapter().getItem(i);
-                List<UserLocation> locations = source.readLocationsWithRange(date, date);
-                LocationRecyclerAdapter adapter = (LocationRecyclerAdapter) mRecyclerView.getAdapter();
+                    Long date = (Long) mSpinner.getAdapter().getItem(i);
+                    List<UserLocation> locations = source.readLocationsWithRange(date, date);
+                    LocationRecyclerAdapter adapter = (LocationRecyclerAdapter) mRecyclerView.getAdapter();
 
-                for(UserLocation location : locations) {
+                    for(UserLocation location : locations) {
 
-                    LocationAddress address = source.readLocationAddress(
-                        location.getPosition().latitude,
-                        location.getPosition().longitude
-                    );
+                        List<Address> geoAddress = mGeocoder.getFromLocation(
+                            location.getPosition().latitude,
+                            location.getPosition().longitude,
+                            1
+                        );
 
-                    address.setHour(location.getHour());
-                    address.setMinute(location.getMinute());
-                    mAddresses.add(address);
+                        LocationAddress address = new LocationAddress(
+                            geoAddress.get(0), location.getHour(), location.getMinute()
+                        );
+                        mAddresses.add(address);
+                    }
+
+                    adapter.setLocations(mAddresses);
                 }
+                catch(IOException ex) {
 
-                adapter.setLocations(mAddresses);
+                    Toast.makeText(
+                        LocationsActivity.this,
+                        "GPS is off. Please turn it on to retrieve location updates.",
+                        Toast.LENGTH_LONG
+                    )
+                    .show();
+                }
             }
 
             @Override

@@ -1,5 +1,7 @@
 package com.javier.positiontracker.model;
 
+import android.location.Address;
+
 import java.util.Objects;
 
 /**
@@ -8,26 +10,23 @@ import java.util.Objects;
 
 public class LocationAddress {
 
-    private String mStreet;
-    private String mArea;
-    private String mPostal;
+    private Address mAddress;
     private int mHour;
     private int mMinute;
 
-    public LocationAddress(String street, String area, String postal) {
+    public LocationAddress(Address address, int hour, int minute) {
 
-        mStreet = street;
-        mArea = area;
-        mPostal = postal;
+        mAddress = address;
+        mHour = hour;
+        mMinute = minute;
     }
 
     @Override
     public int hashCode() {
 
         int result = 17;
-        result = 31 * result + Objects.hashCode(mStreet);
-        result = 31 * result + Objects.hashCode(mArea);
-        result = 31 * result + Objects.hashCode(mPostal);
+        result = 31 * result + Objects.hashCode(mAddress.getAddressLine(0));
+        result = 31 * result + Objects.hashCode(mAddress.getAdminArea());
 
         return result;
     }
@@ -46,45 +45,40 @@ public class LocationAddress {
         LocationAddress otherAddress = (LocationAddress)obj;
 
         return
-            mStreet.equals(otherAddress.getStreet())
-            && mArea.equals(otherAddress.getArea())
-            && mPostal.equals(otherAddress.getPostal());
+            getStreet().equals(otherAddress.getStreet())
+            && getArea().equals(otherAddress.getArea());
     }
 
     public String getStreet() {
-        return mStreet;
+
+        return mAddress.getAddressLine(0);
     }
 
     public String getArea() {
-        return mArea;
-    }
 
-    public String getPostal() {
-        return mPostal;
+        return mAddress.getAdminArea();
     }
 
     @Override
     public String toString() {
 
         return
-            mStreet
+            getStreet()
             + ", "
-            + mArea
-            + ", "
-            + mPostal
+            + getArea()
             + " at  "
             + String.format("%s", mHour < 10 ? String.format("0%d", mHour) : mHour)
             + ":"
             + String.format("%s", mMinute < 10 ? String.format("0%d", mMinute) : mMinute);
     }
 
-    public void setHour(int hour) {
+    public int getHour() {
 
-        mHour = hour;
+        return mHour;
     }
 
-    public void setMinute(int minute) {
-        
-        mMinute = minute;
+    public int getMinute() {
+
+        return mMinute;
     }
 }

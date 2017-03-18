@@ -256,43 +256,6 @@ public class PositionTrackerDataSourceTest {
     }
 
     @Test
-    public void dbShouldInsertLocationAddress() throws Exception {
-
-        // Arrange
-        double lat = 34.0000;
-        double longi = -100.0000;
-        String street = "harambe 404";
-        String area = "HEAVEN";
-        String postal = "666";
-        LocationAddress address = new LocationAddress(street, area, postal);
-
-        // Act
-        long rowId = mTarget.insertLocationAddress(lat, longi, address);
-
-        // Assert
-        Assert.assertTrue(rowId > -1);
-    }
-
-    @Test
-    public void dbShouldReadLocationAddress() throws Exception {
-
-        // Arrange
-        double lat = 34.0000;
-        double longi = -100.0000;
-        String street = "harambe 404";
-        String area = "HEAVEN";
-        String postal = "666";
-        LocationAddress expectedAddress = new LocationAddress(street, area, postal);
-
-        // Act
-        mTarget.insertLocationAddress(lat, longi, expectedAddress);
-        LocationAddress actualAddress = mTarget.readLocationAddress(lat, longi);
-
-        // Assert
-        Assert.assertTrue(expectedAddress.equals(actualAddress));
-    }
-
-    @Test
     public void dbShouldInsertLastLocation() throws Exception {
 
         // Arrange

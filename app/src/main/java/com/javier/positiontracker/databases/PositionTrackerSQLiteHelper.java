@@ -12,7 +12,7 @@ import android.provider.BaseColumns;
 public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
 
     public static final String POSITION_TRACKER_DB = "position_tracker.db";
-    public static final int VERSION = 12;
+    public static final int VERSION = 13;
     public static final long LAST_LOCATION_ID_VALUE = 1;
 
     public static final String LOCATION_TABLE = "location";
@@ -42,23 +42,6 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
             + TIME_LIMIT_CREATION_TIME + " INTEGER"
             + ")";
 
-    public static final String LOCATION_ADDRESS_TABLE = "location_address";
-    public static final String LOCATION_ADDRESS_LAT = "latitude";
-    public static final String LOCATION_ADDRESS_LONG = "longitude";
-    public static final String LOCATION_ADDRESS_STREET = "street";
-    public static final String LOCATION_ADDRESS_AREA = "area";
-    public static final String LOCATION_ADDRESS_POSTAL = "postal";
-    private String CREATE_LOCATION_ADDRESS_TABLE = "CREATE TABLE "
-        + LOCATION_ADDRESS_TABLE
-        + "("
-        + LOCATION_ADDRESS_LAT + " REAL, "
-        + LOCATION_ADDRESS_LONG + " REAL, "
-        + LOCATION_ADDRESS_STREET + " TEXT, "
-        + LOCATION_ADDRESS_AREA + " TEXT, "
-        + LOCATION_ADDRESS_POSTAL + " TEXT, "
-        + "PRIMARY KEY (" + LOCATION_ADDRESS_LAT + ", " + LOCATION_ADDRESS_LONG + ")"
-        +")";
-
     public static final String LAST_LOCATION_TABLE = "last_location";
     public static final String LAST_LOCATION_ID = "last_location_id";
     public static final String LAST_LOCATION_PROVIDER = "provider";
@@ -83,7 +66,6 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
 
         sqLiteDatabase.execSQL(CREATE_LOCATION_TABLE);
         sqLiteDatabase.execSQL(CREATE_TIME_LIMIT_TABLE);
-        sqLiteDatabase.execSQL(CREATE_LOCATION_ADDRESS_TABLE);
         sqLiteDatabase.execSQL(CREATE_LAST_LOCATION_TABLE);
     }
 
@@ -127,10 +109,6 @@ public class PositionTrackerSQLiteHelper extends SQLiteOpenHelper {
             case 6:
                 // Drop table after creating compound key with lat long and date
                 sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + LOCATION_TABLE);
-                break;
-
-            case 7:
-                sqLiteDatabase.execSQL(CREATE_LOCATION_ADDRESS_TABLE);
                 break;
 
             case 8:

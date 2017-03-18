@@ -64,7 +64,6 @@ public class PositionTrackerDataSource {
         mDb = mHelper.getWritableDatabase();
         mDb.delete(PositionTrackerSQLiteHelper.LOCATION_TABLE, null, null);
         mDb.delete(PositionTrackerSQLiteHelper.TIME_LIMIT_TABLE, null, null);
-        mDb.delete(PositionTrackerSQLiteHelper.LOCATION_ADDRESS_TABLE, null, null);
         mDb.delete(PositionTrackerSQLiteHelper.LAST_LOCATION_TABLE, null, null);
 
         mDb.close();
@@ -282,68 +281,6 @@ public class PositionTrackerDataSource {
         cursor.close();
         mDb.close();
         return dates;
-    }
-
-    public long insertLocationAddress(double latitude, double longitude, LocationAddress address) {
-
-        mDb = mHelper.getWritableDatabase();
-        mDb.beginTransaction();
-
-        ContentValues values = new ContentValues();
-        values.put(PositionTrackerSQLiteHelper.LOCATION_ADDRESS_LAT, latitude);
-        values.put(PositionTrackerSQLiteHelper.LOCATION_ADDRESS_LONG, longitude);
-        values.put(PositionTrackerSQLiteHelper.LOCATION_ADDRESS_STREET, address.getStreet());
-        values.put(PositionTrackerSQLiteHelper.LOCATION_ADDRESS_AREA, address.getArea());
-        values.put(PositionTrackerSQLiteHelper.LOCATION_ADDRESS_POSTAL, address.getPostal());
-
-        long rowId = mDb.insert(
-            PositionTrackerSQLiteHelper.LOCATION_ADDRESS_TABLE,
-            null,
-            values
-        );
-
-        mDb.setTransactionSuccessful();
-        mDb.endTransaction();
-        mDb.close();
-
-        return rowId;
-    }
-
-    public LocationAddress readLocationAddress(double latitude, double longitude) {
-
-        mDb = mHelper.getReadableDatabase();
-        Cursor cursor = mDb.query(
-            true,
-            PositionTrackerSQLiteHelper.LOCATION_ADDRESS_TABLE,
-            new String[]{
-                PositionTrackerSQLiteHelper.LOCATION_ADDRESS_STREET,
-                PositionTrackerSQLiteHelper.LOCATION_ADDRESS_AREA,
-                PositionTrackerSQLiteHelper.LOCATION_ADDRESS_POSTAL},
-            PositionTrackerSQLiteHelper.LOCATION_ADDRESS_LAT + "=? AND " + PositionTrackerSQLiteHelper.LOCATION_ADDRESS_LONG + "=?",
-            new String[]{String.valueOf(latitude), String.valueOf(longitude)},
-            null,
-            null,
-            null,
-            null,
-            null
-        );
-
-        if(cursor.moveToFirst()) {
-
-            String street = getString(cursor, PositionTrackerSQLiteHelper.LOCATION_ADDRESS_STREET);
-            String area = getString(cursor, PositionTrackerSQLiteHelper.LOCATION_ADDRESS_AREA);
-            String postal = getString(cursor, PositionTrackerSQLiteHelper.LOCATION_ADDRESS_POSTAL);
-
-            return new LocationAddress(
-                street,
-                area,
-                postal
-            );
-        }
-
-        mDb.close();
-
-        return null;
     }
 
     private String getString(Cursor cursor, String column) {

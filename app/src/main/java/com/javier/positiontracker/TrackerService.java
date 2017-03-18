@@ -183,35 +183,6 @@ public class TrackerService extends Service
             PositionTrackerDataSource source = new PositionTrackerDataSource(this);
             source.insertUserLocation(newLocation);
 
-            double latitude = newLocation.getPosition().latitude;
-            double longitude = newLocation.getPosition().longitude;
-
-            try {
-                List<Address> addresses = mGeocoder.getFromLocation(
-                    latitude,
-                    longitude,
-                    1
-                );
-
-                LocationAddress locationAddress = new LocationAddress(
-                    addresses.get(0).getThoroughfare(),
-                    addresses.get(0).getAdminArea(),
-                    addresses.get(0).getPostalCode()
-                );
-                long rowId = source.insertLocationAddress(latitude, longitude, locationAddress);
-
-                Toast.makeText(this, String.valueOf(rowId), Toast.LENGTH_LONG).show();
-            }
-            catch(IOException ex) {
-
-                Toast.makeText(
-                    this,
-                    "GPS is off. Please turn it on to retrieve location updates.",
-                    Toast.LENGTH_LONG
-                )
-                .show();
-            }
-
             mLastLocation = location;
 
             // For every new location, reset the counter as the user has clearly started moving
