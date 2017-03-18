@@ -66,7 +66,16 @@ public class LocationAddress {
     @Override
     public String toString() {
 
-        return mStreet + ", " + mArea + ", " + mPostal + " at  " + mHour + ":" + mMinute;
+        return
+            mStreet
+            + ", "
+            + mArea
+            + ", "
+            + mPostal
+            + " at  "
+            + String.format("%s", mHour < 10 ? String.format("0%d", mHour) : mHour)
+            + ":"
+            + String.format("%s", mMinute < 10 ? String.format("0%d", mMinute) : mMinute);
     }
 
     public void setHour(int hour) {
