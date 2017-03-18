@@ -11,6 +11,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -66,6 +67,12 @@ public class TrackerService extends Service
         mLocationThreshold = new LocationThreshold();
         mLocationCounter = new LocationCounter();
         mGeocoder = new Geocoder(this, Locale.getDefault());
+
+        TimeLimit timeLimit = getTimeLimit();
+        if(timeLimit != null){
+
+            trackTime(timeLimit.getTime(), timeLimit.getCreatedAt());
+        }
     }
 
     @Override
@@ -116,7 +123,6 @@ public class TrackerService extends Service
     public TimeLimit getTimeLimit() {
 
         PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-
         return source.readTimeLimit();
     }
 
@@ -124,45 +130,6 @@ public class TrackerService extends Service
 
         PositionTrackerDataSource source = new PositionTrackerDataSource(this);
         return source.deleteTimeLimit();
-    }
-
-    private long getCurrentDateInMilliseconds(Date date) {
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-
-        return calendar.getTime().getTime();
-    }
-
-    private int getCurrentHour(Date date) {
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-
-        return calendar.get(Calendar.HOUR_OF_DAY);
-    }
-
-    private int getCurrentMinute(Date date) {
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-
-        return calendar.get(Calendar.MINUTE);
-    }
-
-    private UserLocation createUserLocation(Location location) {
-
-        Date date = new Date();
-        return new UserLocation(
-            new LatLng(location.getLatitude(), location.getLongitude()),
-            getCurrentDateInMilliseconds(date),
-            getCurrentHour(date),
-            getCurrentMinute(date)
-        );
     }
 
     @Override
@@ -269,4 +236,44 @@ public class TrackerService extends Service
             return TrackerService.this;
         }
     }
+
+    private long getCurrentDateInMilliseconds(Date date) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        return calendar.getTime().getTime();
+    }
+
+    private int getCurrentHour(Date date) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+
+        return calendar.get(Calendar.HOUR_OF_DAY);
+    }
+
+    private int getCurrentMinute(Date date) {
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+
+        return calendar.get(Calendar.MINUTE);
+    }
+
+    private UserLocation createUserLocation(Location location) {
+
+        Date date = new Date();
+        return new UserLocation(
+                new LatLng(location.getLatitude(), location.getLongitude()),
+                getCurrentDateInMilliseconds(date),
+                getCurrentHour(date),
+                getCurrentMinute(date)
+        );
+    }
+
 }
