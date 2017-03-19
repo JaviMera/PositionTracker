@@ -41,7 +41,6 @@ import java.util.Locale;
 public class TrackerService extends Service
     implements com.javier.positiontracker.clients.LocationUpdate {
 
-    public static final float SMALLEST_DISTANCE = 20.0f;
     private GoogleClient mClient;
     private Location mLastLocation;
     private IBinder mBinder;
@@ -50,7 +49,7 @@ public class TrackerService extends Service
     private LocationThreshold mLocationThreshold;
     private LocationCounter mLocationCounter;
     private LocationNotification mLocationNotification;
-    private Geocoder mGeocoder;
+    private float mSmallestDisplacement;
 
     @Override
     public void onCreate() {
@@ -64,9 +63,9 @@ public class TrackerService extends Service
             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)
         );
 
+        mSmallestDisplacement = Float.parseFloat(getString(R.string.smallest_displacement));
         mLocationThreshold = new LocationThreshold();
         mLocationCounter = new LocationCounter();
-        mGeocoder = new Geocoder(this, Locale.getDefault());
 
         TimeLimit timeLimit = getTimeLimit();
         if(timeLimit != null){
@@ -155,7 +154,7 @@ public class TrackerService extends Service
 
         // Check if the new location is considered a new location based on the distance between
         // last location and new location
-        if(distance >= SMALLEST_DISTANCE || mLastLocation == null) {
+        if(distance >= mSmallestDisplacement || mLastLocation == null) {
 
             UserLocation newLocation = createUserLocation(location);
             PositionTrackerDataSource source = new PositionTrackerDataSource(this);
