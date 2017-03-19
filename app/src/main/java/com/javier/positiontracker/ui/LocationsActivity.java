@@ -40,9 +40,6 @@ import butterknife.OnClick;
 public class LocationsActivity extends AppCompatActivity
     implements LocationsActivityView{
 
-    @BindView(R.id.allLocationsCheckBox)
-    CheckBox mCheckBox;
-
     @BindView(R.id.locationDatesSpinner)
     Spinner mSpinner;
 
@@ -64,36 +61,12 @@ public class LocationsActivity extends AppCompatActivity
 
         mPresenter.initializeRecyclerView();
         mPresenter.initializeSpinnerView();
-        mPresenter.initializeCheckBoxView();
 
         mAddresses = new LinkedList<>();
         mGeocoder = new Geocoder(this, Locale.getDefault());
 
         final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
         mCache = new AddressCache(maxMemory);
-    }
-
-    @Override
-    public void setRecyclerEnabled(boolean enabled) {
-
-        // Change color of each item's text depending if they are Enabled / Disabled
-        LocationRecyclerAdapter recyclerAdapter = (LocationRecyclerAdapter) mRecyclerView.getAdapter();
-        recyclerAdapter.setEnabled(enabled);
-
-        // Enable / Disable scrolling of recycler
-        RecyclerLinearLayout layout = (RecyclerLinearLayout) mRecyclerView.getLayoutManager();
-        layout.setCanScroll(enabled);
-    }
-
-    @Override
-    public void setSpinnerEnabled(boolean enabled) {
-
-        // Enable / Disable spinner control
-        mSpinner.setEnabled(enabled);
-
-        // Change color of spinner's view text depending if it's Enabled / Disabled
-        DatesSpinnerAdater spinnerAdater = (DatesSpinnerAdater) mSpinner.getAdapter();
-        spinnerAdater.setEnabled(enabled);
     }
 
     @Override
@@ -115,12 +88,6 @@ public class LocationsActivity extends AppCompatActivity
 
         mSpinner.setAdapter(adapter);
         mSpinner.setOnItemSelectedListener(getSpinnerListener());
-    }
-
-    @Override
-    public void initializeCheckBoxView() {
-
-        mCheckBox.setOnCheckedChangeListener(getCheckBoxListener());
     }
 
     private Intent getEmailIntent(File file) {
@@ -217,17 +184,6 @@ public class LocationsActivity extends AppCompatActivity
             location.getMinute()
         );
     }
-    private CompoundButton.OnCheckedChangeListener getCheckBoxListener() {
-
-        return new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
-
-                mPresenter.setRecyclerEnabled(!checked);
-                mPresenter.setSpinnerEnabled(!checked);
-            }
-        };
-    }
 
     @OnClick(R.id.sendLocationsButton)
     public void onSendLocationsButtonClick(View view) {
@@ -239,15 +195,6 @@ public class LocationsActivity extends AppCompatActivity
             if(fileManager.createDirectory(Environment.DIRECTORY_DOCUMENTS)) {
 
                 try {
-
-                    // If the user checked the box, load all locations from the database
-                    // Do this call only upon button click, so we don't load/unload them everytime
-                    // the user might check/uncheck the box
-                    if(mCheckBox.isChecked()) {
-
-                        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
-//                        mAddresses = source.readAllAddresses();
-                    }
 
                     File file = fileManager.createFile(
                         Environment.DIRECTORY_DOCUMENTS,

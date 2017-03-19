@@ -23,13 +23,11 @@ public class LocationRecyclerAdapter extends RecyclerView.Adapter<LocationRecycl
 
     private Context mContext;
     private List<LocationAddress> mAddresses;
-    private boolean mEnabled;
 
     public LocationRecyclerAdapter(Context context) {
 
         mContext = context;
         mAddresses = new LinkedList<>();
-        mEnabled = true;
     }
 
     public void setLocations(List<LocationAddress> locations) {
@@ -47,7 +45,7 @@ public class LocationRecyclerAdapter extends RecyclerView.Adapter<LocationRecycl
 
         View view = LayoutInflater
             .from(mContext)
-            .inflate(R.layout.recycler_location_item, parent, false);
+            .inflate(R.layout.address_item, parent, false);
 
         return new LocationViewHolder(view);
     }
@@ -64,39 +62,28 @@ public class LocationRecyclerAdapter extends RecyclerView.Adapter<LocationRecycl
         return mAddresses.size();
     }
 
-    public void setEnabled(boolean b) {
-
-        mEnabled = b;
-        notifyItemRangeChanged(0, mAddresses.size());
-    }
-
     class LocationViewHolder extends RecyclerView.ViewHolder {
 
-        TextView mLocationTextView;
+        TextView mStreetTextView;
+        TextView mAreaTextView;
+        TextView mTimeTextView;
 
         LocationViewHolder(View itemView) {
 
             super(itemView);
 
-            mLocationTextView = (TextView) itemView.findViewById(R.id.locationTextView);
+            mStreetTextView = (TextView) itemView.findViewById(R.id.streetTextView);
+            mAreaTextView = (TextView) itemView.findViewById(R.id.areaTextView);
+            mTimeTextView = (TextView) itemView.findViewById(R.id.timeTextView);
         }
 
         void bind(LocationAddress locationAddress) {
 
-            mLocationTextView.setText(
-                String.format(Locale.ENGLISH,
-                    locationAddress.toString()
-                )
+            mStreetTextView.setText(locationAddress.getStreet());
+            mAreaTextView.setText(locationAddress.getArea());
+            mTimeTextView.setText(
+                String.format("%s:%s", locationAddress.getHour(), locationAddress.getMinute())
             );
-
-            if(mEnabled) {
-
-                mLocationTextView.setTextColor(ContextCompat.getColor(mContext, android.R.color.black));
-            }
-            else {
-
-                mLocationTextView.setTextColor(ContextCompat.getColor(mContext, android.R.color.darker_gray));
-            }
         }
     }
 }

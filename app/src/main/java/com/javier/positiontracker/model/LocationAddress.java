@@ -51,7 +51,7 @@ public class LocationAddress {
 
     public String getStreet() {
 
-        return mAddress.getAddressLine(0);
+        return mAddress.getAddressLine(0).split(",")[0];
     }
 
     public String getArea() {
@@ -59,26 +59,13 @@ public class LocationAddress {
         return mAddress.getAdminArea();
     }
 
-    @Override
-    public String toString() {
+    public String getHour() {
 
-        return
-            getStreet()
-            + ", "
-            + getArea()
-            + " at  "
-            + String.format("%s", mHour < 10 ? String.format("0%d", mHour) : mHour)
-            + ":"
-            + String.format("%s", mMinute < 10 ? String.format("0%d", mMinute) : mMinute);
+        return mHour < 10 ? "0" + mHour : mHour + "";
     }
 
-    public int getHour() {
+    public String getMinute() {
 
-        return mHour;
-    }
-
-    public int getMinute() {
-
-        return mMinute;
+        return mMinute < 10 ? "0" + mMinute : mMinute + "";
     }
 }

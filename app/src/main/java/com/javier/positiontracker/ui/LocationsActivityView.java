@@ -6,9 +6,6 @@ package com.javier.positiontracker.ui;
 
 public interface LocationsActivityView {
 
-    void setRecyclerEnabled(boolean enabled);
-    void setSpinnerEnabled(boolean enabled);
     void initializeRecyclerView();
     void initializeSpinnerView();
-    void initializeCheckBoxView();
 }

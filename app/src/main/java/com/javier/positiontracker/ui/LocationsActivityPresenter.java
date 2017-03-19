@@ -13,16 +13,6 @@ public class LocationsActivityPresenter {
         mView = view;
     }
 
-    public void setRecyclerEnabled(boolean enabled) {
-
-        mView.setRecyclerEnabled(enabled);
-    }
-
-    public void setSpinnerEnabled(boolean enabled) {
-
-        mView.setSpinnerEnabled(enabled);
-    }
-
     public void initializeRecyclerView() {
 
         mView.initializeRecyclerView();
@@ -31,10 +21,5 @@ public class LocationsActivityPresenter {
     public void initializeSpinnerView() {
 
         mView.initializeSpinnerView();
-    }
-
-    public void initializeCheckBoxView() {
-
-        mView.initializeCheckBoxView();
     }
 }
