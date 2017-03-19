@@ -77,7 +77,7 @@ public class LocationAddressTest {
 
         // Arrange
         String expectedString = String.format(Locale.ENGLISH,
-            "%s %s %s:%s\n\n", mExpectedStreet, mExpectedArea, mTarget.getHour(), mTarget.getMinute()
+            "%30s, %-30s %s:%s\r\n\r\n", mExpectedStreet, mExpectedArea, mTarget.getHour(), mTarget.getMinute()
         );
 
         // Act

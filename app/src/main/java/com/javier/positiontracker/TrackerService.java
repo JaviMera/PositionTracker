@@ -135,6 +135,8 @@ public class TrackerService extends Service
 
     @Override
     public void onDestroy() {
+
+        unregisterReceiver(mGpsReceiver);
         super.onDestroy();
     }
 
@@ -155,6 +157,8 @@ public class TrackerService extends Service
 
         // Kill the service when the user has killed the app by swiping it to the left
         stopSelf();
+
+        unregisterReceiver(mGpsReceiver);
     }
 
     public void stopTracking() {

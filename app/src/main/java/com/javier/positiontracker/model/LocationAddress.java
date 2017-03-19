@@ -73,7 +73,7 @@ public class LocationAddress {
     public String getFullAddress() {
 
         return String.format(Locale.ENGLISH,
-            "%s %s %s:%s\n\n", getStreet(), getArea(), getHour(), getMinute()
+            "%30s, %-30s %s:%s\r\n\r\n", getStreet(), getArea(), getHour(), getMinute()
         );
     }
 }
