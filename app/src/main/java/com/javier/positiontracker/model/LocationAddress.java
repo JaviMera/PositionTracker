@@ -2,6 +2,7 @@ package com.javier.positiontracker.model;
 
 import android.location.Address;
 
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -67,5 +68,12 @@ public class LocationAddress {
     public String getMinute() {
 
         return mMinute < 10 ? "0" + mMinute : mMinute + "";
+    }
+
+    public String getFullAddress() {
+
+        return String.format(Locale.ENGLISH,
+            "%s %s %s:%s\n\n", getStreet(), getArea(), getHour(), getMinute()
+        );
     }
 }

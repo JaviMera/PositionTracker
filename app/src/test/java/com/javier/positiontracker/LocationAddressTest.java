@@ -12,7 +12,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Locale;
+
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.when;
 
 /**
@@ -22,7 +25,7 @@ import static org.mockito.Mockito.when;
 public class LocationAddressTest {
 
     private LocationAddress mTarget;
-    private String mExpectedStreet = "404 harambe, Zoo Park";
+    private String mExpectedStreet = "404 harambe";
     private String mExpectedArea = "HEAVEN";
     private int mExpectedHour = 2;
     private int mExpectedMinute = 20;
@@ -67,5 +70,20 @@ public class LocationAddressTest {
 
         // Assert
         Assert.assertEquals(mExpectedMinute, mTarget.getMinute());
+    }
+
+    @Test
+    public void getFullAddres() throws Exception {
+
+        // Arrange
+        String expectedString = String.format(Locale.ENGLISH,
+            "%s %s %s:%s\n\n", mExpectedStreet, mExpectedArea, mTarget.getHour(), mTarget.getMinute()
+        );
+
+        // Act
+        String actualString = mTarget.getFullAddress();
+
+        // Assert
+        Assert.assertEquals(expectedString, actualString);
     }
 }

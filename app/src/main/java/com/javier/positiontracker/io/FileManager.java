@@ -43,7 +43,7 @@ public class FileManager {
 
             for(LocationAddress location : data) {
 
-                writer.append(location.toString());
+                writer.append(location.getFullAddress());
             }
 
             writer.close();
