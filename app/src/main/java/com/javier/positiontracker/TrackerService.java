@@ -2,11 +2,14 @@ package com.javier.positiontracker;
 
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -16,6 +19,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.javier.positiontracker.broadcastreceivers.BroadcastBase;
+import com.javier.positiontracker.broadcastreceivers.BroadcastGps;
 import com.javier.positiontracker.broadcastreceivers.BroadcastNotification;
 import com.javier.positiontracker.clients.GoogleClient;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
@@ -24,6 +28,7 @@ import com.javier.positiontracker.databases.PositionTrackerSQLiteHelper;
 import com.javier.positiontracker.model.LocationAddress;
 import com.javier.positiontracker.model.LocationCounter;
 import com.javier.positiontracker.model.LocationNotification;
+import com.javier.positiontracker.model.LocationProvider;
 import com.javier.positiontracker.model.LocationThreshold;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
@@ -46,10 +51,33 @@ public class TrackerService extends Service
     private IBinder mBinder;
     private BroadcastBase mBroadcastLocation;
     private BroadcastBase mBroadcastNotification;
+    private BroadcastBase mBroadcastGps;
+
     private LocationThreshold mLocationThreshold;
     private LocationCounter mLocationCounter;
     private LocationNotification mLocationNotification;
     private float mSmallestDisplacement;
+
+    private BroadcastReceiver mGpsReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+        LocationManager manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        // Check whether location has been turned on or off
+        if(manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+
+            // Connect back to google client when gps is turned back on
+            mClient.connect();
+            mBroadcastGps.send(new LocationProvider(true));
+        }
+        else {
+
+            // Disconnect from google client if gps is turned off
+            mClient.disconnect();
+            mBroadcastGps.send(new LocationProvider(false));
+        }
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -58,6 +86,8 @@ public class TrackerService extends Service
         mClient = new GoogleClient(this, this);
         mBroadcastLocation = new BroadcastLocation(LocalBroadcastManager.getInstance(this));
         mBroadcastNotification = new BroadcastNotification(LocalBroadcastManager.getInstance(this));
+        mBroadcastGps = new BroadcastGps(LocalBroadcastManager.getInstance(this));
+
         mLocationNotification = new LocationNotification(
             this,
             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)
@@ -66,6 +96,8 @@ public class TrackerService extends Service
         mSmallestDisplacement = Float.parseFloat(getString(R.string.smallest_displacement));
         mLocationThreshold = new LocationThreshold();
         mLocationCounter = new LocationCounter();
+
+        registerReceiver(mGpsReceiver, new IntentFilter("android.location.PROVIDERS_CHANGED"));
 
         TimeLimit timeLimit = getTimeLimit();
         if(timeLimit != null){
@@ -140,6 +172,12 @@ public class TrackerService extends Service
 
         PositionTrackerDataSource source = new PositionTrackerDataSource(this);
         return source.deleteTimeLimit();
+    }
+
+    public boolean isConnected() {
+
+        LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        return manager.isProviderEnabled(LocationManager.GPS_PROVIDER);
     }
 
     @Override
@@ -280,10 +318,10 @@ public class TrackerService extends Service
 
         Date date = new Date();
         return new UserLocation(
-                new LatLng(location.getLatitude(), location.getLongitude()),
-                getCurrentDateInMilliseconds(date),
-                getCurrentHour(date),
-                getCurrentMinute(date)
+            new LatLng(location.getLatitude(), location.getLongitude()),
+            getCurrentDateInMilliseconds(date),
+            getCurrentHour(date),
+            getCurrentMinute(date)
         );
     }
 

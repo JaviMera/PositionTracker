@@ -4,11 +4,13 @@ import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
@@ -18,6 +20,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -35,6 +38,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.javier.positiontracker.R;
 import com.javier.positiontracker.TrackerService;
+import com.javier.positiontracker.broadcastreceivers.BroadcastGps;
 import com.javier.positiontracker.broadcastreceivers.BroadcastLocation;
 import com.javier.positiontracker.broadcastreceivers.BroadcastNotification;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
@@ -42,6 +46,7 @@ import com.javier.positiontracker.dialogs.DateRangeListener;
 import com.javier.positiontracker.dialogs.DialogDateRange;
 import com.javier.positiontracker.dialogs.DialogNotification;
 import com.javier.positiontracker.dialogs.DialogViewNotification;
+import com.javier.positiontracker.model.LocationProvider;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
@@ -63,8 +68,10 @@ public class TrackerActivity extends AppCompatActivity
 
     public static final int FINE_LOCATION_CODE = 100;
     public static final int EXTERNAL_STORAGE_CODE = 1000;
+    private static final int LOCATION_PROVIDER_CODE = 1100;
 
     private final static float ZOOM_LEVEL_STREET = 15.0f;
+    public static final float ZOOM_LVL_WORLD = 1.0f;
 
     private String mTimeLimitKey;
     private GoogleMap mMap;
@@ -81,7 +88,15 @@ public class TrackerActivity extends AppCompatActivity
 
             TrackerService.ServiceBinder binder = (TrackerService.ServiceBinder) iBinder;
             mService = binder.getService();
-            mService.startTracking();
+
+            if(mService.isConnected()) {
+
+                mService.startTracking();
+            }
+            else {
+
+                mLocationFab.performClick();
+            }
 
             TimeLimit timeLimit = mService.getTimeLimit();
 
@@ -174,6 +189,27 @@ public class TrackerActivity extends AppCompatActivity
 
             // Re-draw the menu icons when the notification has been launched
             mPresenter.drawMenuIcons();
+        }
+    };
+
+    private BroadcastReceiver mGpsReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+        LocationProvider provider = intent.getParcelableExtra(BroadcastGps.KEY);
+
+        if(provider.isEnabled()) {
+
+            mPresenter.setFabVisible(true);
+            mPresenter.setMarkerVisible(true);
+            mLocationFab.performClick();
+        }
+        else {
+
+            mPresenter.setMarkerVisible(false);
+            mPresenter.moveMapCamera(new LatLng(0,0));
+            mPresenter.zoomMapCamera(ZOOM_LVL_WORLD, 2000, null);
+        }
         }
     };
 
@@ -341,6 +377,13 @@ public class TrackerActivity extends AppCompatActivity
                 mNotificationReceiver,
                 new IntentFilter(BroadcastNotification.ACTION)
             );
+
+        // Register a receiver to listen to gps events from the service
+        LocalBroadcastManager.getInstance(this)
+            .registerReceiver(
+                mGpsReceiver,
+                new IntentFilter(BroadcastGps.ACTION)
+        );
     }
 
     @Override
@@ -350,7 +393,7 @@ public class TrackerActivity extends AppCompatActivity
         // Unregister any broadcast receivers when the app is not in the foreground
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mNewLocationReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mNotificationReceiver);
-
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mGpsReceiver);
         if(mBound) {
 
             mPresenter.setBoundToService(false);
@@ -378,6 +421,20 @@ public class TrackerActivity extends AppCompatActivity
 
                 outState.putLong(mTimeLimitKey, timeLimit.getTime());
             }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        switch(requestCode) {
+
+            case LOCATION_PROVIDER_CODE:
+
+                mPresenter.setFabVisible(true);
+                mPresenter.setMarkerVisible(true);
+                mLocationFab.performClick();
+                break;
         }
     }
 
@@ -461,11 +518,42 @@ public class TrackerActivity extends AppCompatActivity
     @OnClick(R.id.locationFab)
     public void onLocationFabClick(View view) {
 
-        // Before moving and zooming in the current marker, check current marker is a valid marker
-        if(mCurrentMarker != null) {
+        LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-            mPresenter.moveMapCamera(mCurrentMarker.getPosition());
-            mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
+        if(manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+
+            // Before moving and zooming in the current marker, check current marker is a valid marker
+            if(mCurrentMarker != null) {
+
+                mPresenter.moveMapCamera(mCurrentMarker.getPosition());
+                mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
+            }
+        }
+        else {
+
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
+                    this);
+            alertDialogBuilder
+                    .setMessage("GPS is disabled in your device. Enable it?")
+                    .setCancelable(false)
+                    .setPositiveButton("Enable GPS",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog,
+                                                    int id) {
+                                    Intent callGPSSettingIntent = new Intent(
+                                            android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                    startActivityForResult(callGPSSettingIntent, LOCATION_PROVIDER_CODE);
+                                }
+                            });
+            alertDialogBuilder.setNegativeButton("Cancel",
+                    new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+
+                            dialog.cancel();
+                        }
+                    });
+            AlertDialog alert = alertDialogBuilder.create();
+            alert.show();
         }
     }
 

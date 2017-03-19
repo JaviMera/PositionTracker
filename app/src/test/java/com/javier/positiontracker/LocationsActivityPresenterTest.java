@@ -48,40 +48,4 @@ public class LocationsActivityPresenterTest {
         // Assert
         Mockito.verify(mView).initializeSpinnerView();
     }
-
-    @Test
-    public void initializeCheckBoxView() throws Exception {
-
-        // Act
-        mTarget.initializeCheckBoxView();
-
-        // Assert
-        Mockito.verify(mView).initializeCheckBoxView();
-    }
-
-    @Test
-    public void setRecyclerEnabled() throws Exception {
-
-        // Arrange
-        boolean enabled = false;
-
-        // Act
-        mTarget.setRecyclerEnabled(enabled);
-
-        // Assert
-        Mockito.verify(mView).setRecyclerEnabled(enabled);
-    }
-
-    @Test
-    public void setSpinnerEnabled() throws Exception {
-
-        // Arrange
-        boolean enabled = true;
-
-        // Act
-        mTarget.setSpinnerEnabled(enabled);
-
-        // Assert
-        Mockito.verify(mView).setSpinnerEnabled(enabled);
-    }
 }
