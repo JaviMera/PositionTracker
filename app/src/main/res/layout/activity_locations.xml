@@ -8,8 +8,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/locations_activity_title"
-        android:padding="15dp"
-        android:layout_margin="12dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="15dp"
         android:textSize="18sp"
         android:textColor="@color/colorPrimary"/>
 

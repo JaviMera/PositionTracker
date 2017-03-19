@@ -24,7 +24,7 @@
     <string name="dialog_view_notification_tag">dialog_view_notification</string>
     <string name="snackbar_data_exported">EMAIL SENT</string>
     <string name="file_creation_note">File with locations will be created under /Documents/locations.txt</string>
-    <string name="locations_activity_button_text">Send</string>
+    <string name="locations_activity_button_text">Done</string>
     <string name="locations_activity_checkbox_text">Select All</string>
     <string name="locations_activity_title">Select locations by date</string>
     <string name="key_preferences">com.javier.positiontracker.PREFERENCES</string>
