@@ -74,6 +74,7 @@ public class TrackerActivity extends AppCompatActivity
     public static final int EXTERNAL_STORAGE_CODE = 1000;
     private static final int LOCATION_PROVIDER_CODE = 1100;
 
+    private Menu mMenu;
     private String mTimeLimitKey;
     private GoogleMap mMap;
     private List<Marker> mMarkers;
@@ -81,6 +82,7 @@ public class TrackerActivity extends AppCompatActivity
     private boolean mBound;
     private boolean mNotificationActive;
     private boolean mDisplayHomeEnabled;
+    private boolean mGpsEnabled;
     private TrackerActivityPresenter mPresenter;
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -93,10 +95,12 @@ public class TrackerActivity extends AppCompatActivity
             if(mService.isConnected()) {
 
                 mService.startTracking();
+                mGpsEnabled = true;
             }
             else {
 
                 mLocationFab.performClick();
+                mGpsEnabled = false;
             }
 
             TimeLimit timeLimit = mService.getTimeLimit();
@@ -204,13 +208,17 @@ public class TrackerActivity extends AppCompatActivity
             mPresenter.setFabVisible(true);
             mPresenter.setMarkerVisible(true);
             mLocationFab.performClick();
+            mGpsEnabled = true;
         }
         else {
 
+            mGpsEnabled = false;
             mPresenter.setMarkerVisible(false);
             mPresenter.moveMapCamera(new LatLng(0,0));
             mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.World), 2000, null);
         }
+
+        invalidateOptionsMenu();
         }
     };
 
@@ -219,6 +227,23 @@ public class TrackerActivity extends AppCompatActivity
 
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main_activity, menu);
+        mMenu = menu;
+
+        if(mGpsEnabled) {
+
+            menuWithGPSOn(menu);
+        }
+        else {
+
+            menuWithGPSOff(menu);
+        }
+
+        return true;
+    }
+
+    private void menuWithGPSOn(Menu menu) {
+
+        menu.findItem(R.id.action_export_data).setVisible(true);
 
         if(mNotificationActive) {
 
@@ -234,24 +259,33 @@ public class TrackerActivity extends AppCompatActivity
             menu.findItem(R.id.action_notification_active).setVisible(false);
             menu.findItem(R.id.action_notification_none).setVisible(true);
         }
+    }
 
-        return true;
+    private void menuWithGPSOff(Menu menu) {
+
+        menu.findItem(R.id.action_notification_active).setVisible(false);
+        menu.findItem(R.id.action_notification_none).setVisible(false);
+        menu.findItem(R.id.action_export_data).setVisible(false);
     }
 
     @Override
     public void onBackPressed() {
 
+        // Check if the upper right arrow icon is showing
+        // This will indicate that the user is currently viewing past locations
         if(mDisplayHomeEnabled) {
 
-            clearMarkers(mMarkers);
-            mPresenter.setMarkerVisible(true);
-            mPresenter.moveMapCamera(mCurrentMarker.getPosition());
-            mPresenter.setDisplayHome(false);
-            mPresenter.setFabVisible(true);
+            // Show the appropriate layout
+            onBackPress();
 
-            return;
+            // Hide the upper right arrow icon
+            mPresenter.setDisplayHome(false);
         }
-        super.onBackPressed();
+        else {
+
+            // IF user is not viewing past locations, it means he/she is just exiting the app
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -262,12 +296,8 @@ public class TrackerActivity extends AppCompatActivity
         switch(item.getItemId()) {
 
             case android.R.id.home:
-                clearMarkers(mMarkers);
-                mPresenter.setMarkerVisible(true);
-                mPresenter.moveMapCamera(mCurrentMarker.getPosition());
-                mPresenter.setFabVisible(true);
-                mPresenter.setDisplayHome(false);
 
+                onBackPressed();
                 break;
 
             case R.id.action_date_range:
@@ -435,9 +465,8 @@ public class TrackerActivity extends AppCompatActivity
 
             case LOCATION_PROVIDER_CODE:
 
-                mPresenter.setFabVisible(true);
-                mPresenter.setMarkerVisible(true);
-                mLocationFab.performClick();
+
+                menuWithGPSOn(mMenu);
                 break;
         }
     }
@@ -676,5 +705,24 @@ public class TrackerActivity extends AppCompatActivity
             android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
 
         startActivityForResult(callGPSSettingIntent, LOCATION_PROVIDER_CODE);
+    }
+
+    private void onBackPress() {
+
+        clearMarkers(mMarkers);
+        mPresenter.setFabVisible(true);
+
+        if(mGpsEnabled) {
+
+            mPresenter.setMarkerVisible(true);
+            mPresenter.moveMapCamera(mCurrentMarker.getPosition());
+            mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.Streets), 2000, null);
+        }
+        else {
+
+            mPresenter.setMarkerVisible(false);
+            mPresenter.moveMapCamera(new LatLng(0,0));
+            mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.World), 2000, null);
+        }
     }
 }
