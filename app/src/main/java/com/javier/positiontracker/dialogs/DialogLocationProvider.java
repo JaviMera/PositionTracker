@@ -9,6 +9,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 
+import com.javier.positiontracker.R;
 import com.javier.positiontracker.ui.TrackerActivity;
 
 /**
@@ -44,10 +45,10 @@ public class DialogLocationProvider extends DialogFragment {
             getContext());
 
         alertDialogBuilder
-            .setMessage("GPS is disabled in your device. Enable it?")
+            .setMessage(R.string.dialog_location_provider_message)
             .setCancelable(false)
-            .setPositiveButton("Enable GPS",positiveButtonListener())
-            .setNegativeButton("Cancel", negativeButtonListener());
+            .setPositiveButton(R.string.dialog_location_provider_positive_button_text,positiveButtonListener())
+            .setNegativeButton(R.string.dialog_location_provider_negative_button_text, negativeButtonListener());
 
         return alertDialogBuilder.create();
     }

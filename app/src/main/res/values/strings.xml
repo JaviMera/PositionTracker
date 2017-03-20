@@ -30,4 +30,7 @@
     <string name="key_preferences">com.javier.positiontracker.PREFERENCES</string>
     <string name="key_current_location">current_location</string>
     <string name="smallest_displacement">40</string>
+    <string name="dialog_location_provider_message">GPS is disabled in your device. Enable it?</string>
+    <string name="dialog_location_provider_positive_button_text">Enable GPS</string>
+    <string name="dialog_location_provider_negative_button_text">Cancel</string>
 </resources>
