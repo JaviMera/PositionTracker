@@ -47,9 +47,11 @@ import com.javier.positiontracker.dialogs.DialogDateRange;
 import com.javier.positiontracker.dialogs.DialogLocationProvider;
 import com.javier.positiontracker.dialogs.DialogNotification;
 import com.javier.positiontracker.dialogs.DialogViewNotification;
+import com.javier.positiontracker.model.CameraLevel;
 import com.javier.positiontracker.model.LocationProvider;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
+import com.javier.positiontracker.model.ZoomValues;
 
 import java.util.Date;
 import java.util.LinkedList;
@@ -71,9 +73,6 @@ public class TrackerActivity extends AppCompatActivity
     public static final int FINE_LOCATION_CODE = 100;
     public static final int EXTERNAL_STORAGE_CODE = 1000;
     private static final int LOCATION_PROVIDER_CODE = 1100;
-
-    private final static float ZOOM_LEVEL_STREET = 15.0f;
-    public static final float ZOOM_LVL_WORLD = 1.0f;
 
     private String mTimeLimitKey;
     private GoogleMap mMap;
@@ -178,7 +177,7 @@ public class TrackerActivity extends AppCompatActivity
             // Create the new marker with the newest location
             mCurrentMarker = mMap.addMarker(options);
             mPresenter.moveMapCamera(currentLatLng);
-            mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
+            mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.Streets), 2000, null);
         }
     };
 
@@ -210,7 +209,7 @@ public class TrackerActivity extends AppCompatActivity
 
             mPresenter.setMarkerVisible(false);
             mPresenter.moveMapCamera(new LatLng(0,0));
-            mPresenter.zoomMapCamera(ZOOM_LVL_WORLD, 2000, null);
+            mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.World), 2000, null);
         }
         }
     };
@@ -358,7 +357,10 @@ public class TrackerActivity extends AppCompatActivity
         }
 
         Intent intent = new Intent(this, TrackerService.class);
+
+        // Call start service in case it was killed by the user
         startService(intent);
+
         // Bind to TrackerService to store the location of the device periodically
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 
@@ -504,7 +506,7 @@ public class TrackerActivity extends AppCompatActivity
 
             // Move the camera to the first marker in the array of markers
             mPresenter.moveMapCamera(mMarkers.get(0).getPosition());
-            mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
+            mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.Streets), 2000, null);
         }
     }
 
@@ -528,7 +530,7 @@ public class TrackerActivity extends AppCompatActivity
             if(mCurrentMarker != null) {
 
                 mPresenter.moveMapCamera(mCurrentMarker.getPosition());
-                mPresenter.zoomMapCamera(ZOOM_LEVEL_STREET, 2000, null);
+                mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.Streets), 2000, null);
             }
         }
         else {
