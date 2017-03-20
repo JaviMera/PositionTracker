@@ -135,8 +135,6 @@ public class TrackerService extends Service
 
     @Override
     public void onDestroy() {
-
-        unregisterReceiver(mGpsReceiver);
         super.onDestroy();
     }
 
