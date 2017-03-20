@@ -44,6 +44,7 @@ import com.javier.positiontracker.broadcastreceivers.BroadcastNotification;
 import com.javier.positiontracker.databases.PositionTrackerDataSource;
 import com.javier.positiontracker.dialogs.DateRangeListener;
 import com.javier.positiontracker.dialogs.DialogDateRange;
+import com.javier.positiontracker.dialogs.DialogLocationProvider;
 import com.javier.positiontracker.dialogs.DialogNotification;
 import com.javier.positiontracker.dialogs.DialogViewNotification;
 import com.javier.positiontracker.model.LocationProvider;
@@ -64,7 +65,8 @@ public class TrackerActivity extends AppCompatActivity
     OnMapReadyCallback,
     DateRangeListener,
     DialogNotification.OnNotificationCallback,
-    DialogViewNotification.OnViewNotification {
+    DialogViewNotification.OnViewNotification,
+    DialogLocationProvider.OnProviderListener {
 
     public static final int FINE_LOCATION_CODE = 100;
     public static final int EXTERNAL_STORAGE_CODE = 1000;
@@ -531,29 +533,8 @@ public class TrackerActivity extends AppCompatActivity
         }
         else {
 
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(
-                    this);
-            alertDialogBuilder
-                    .setMessage("GPS is disabled in your device. Enable it?")
-                    .setCancelable(false)
-                    .setPositiveButton("Enable GPS",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog,
-                                                    int id) {
-                                    Intent callGPSSettingIntent = new Intent(
-                                            android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                                    startActivityForResult(callGPSSettingIntent, LOCATION_PROVIDER_CODE);
-                                }
-                            });
-            alertDialogBuilder.setNegativeButton("Cancel",
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-
-                            dialog.cancel();
-                        }
-                    });
-            AlertDialog alert = alertDialogBuilder.create();
-            alert.show();
+            DialogFragment dialog = DialogLocationProvider.newInstance();
+            dialog.show(getSupportFragmentManager(), "dialog_provider");
         }
     }
 
@@ -684,5 +665,14 @@ public class TrackerActivity extends AppCompatActivity
 
         // Clear out all markers
         markers.clear();
+    }
+
+    @Override
+    public void onActivateProvider() {
+
+        Intent callGPSSettingIntent = new Intent(
+            android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+
+        startActivityForResult(callGPSSettingIntent, LOCATION_PROVIDER_CODE);
     }
 }
