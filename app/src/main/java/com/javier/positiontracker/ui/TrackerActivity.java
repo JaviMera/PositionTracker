@@ -356,7 +356,7 @@ public class TrackerActivity extends AppCompatActivity
         }
 
         Intent intent = new Intent(this, TrackerService.class);
-
+        startService(intent);
         // Bind to TrackerService to store the location of the device periodically
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
 

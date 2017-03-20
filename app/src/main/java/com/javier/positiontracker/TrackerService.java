@@ -110,9 +110,6 @@ public class TrackerService extends Service
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
-        // Begin tracking location when the service is first started
-        startTracking();
-
         // By returning START_STICKY we explicitly tell the Android os that the service should be
         // restarted when the last client unbinds from it.
         return START_STICKY;
@@ -136,6 +133,9 @@ public class TrackerService extends Service
 
     @Override
     public void onDestroy() {
+
+        unregisterReceiver(mGpsReceiver);
+
         super.onDestroy();
     }
 
@@ -156,8 +156,6 @@ public class TrackerService extends Service
 
         // Kill the service when the user has killed the app by swiping it to the left
         stopSelf();
-
-        unregisterReceiver(mGpsReceiver);
     }
 
     public void stopTracking() {
