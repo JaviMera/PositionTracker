@@ -56,6 +56,7 @@ public class TrackerService extends Service
     private LocationThreshold mLocationThreshold;
     private LocationCounter mLocationCounter;
     private LocationNotification mLocationNotification;
+    private Geocoder mGeocoder;
     private float mSmallestDisplacement;
 
     private BroadcastReceiver mGpsReceiver = new BroadcastReceiver() {
@@ -87,12 +88,12 @@ public class TrackerService extends Service
         mBroadcastLocation = new BroadcastLocation(LocalBroadcastManager.getInstance(this));
         mBroadcastNotification = new BroadcastNotification(LocalBroadcastManager.getInstance(this));
         mBroadcastGps = new BroadcastGps(LocalBroadcastManager.getInstance(this));
-
         mLocationNotification = new LocationNotification(
             this,
             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)
         );
 
+        mGeocoder = new Geocoder(this, Locale.getDefault());
         mSmallestDisplacement = Float.parseFloat(getString(R.string.smallest_displacement));
         mLocationThreshold = new LocationThreshold();
         mLocationCounter = new LocationCounter();
@@ -200,6 +201,16 @@ public class TrackerService extends Service
             PositionTrackerDataSource source = new PositionTrackerDataSource(this);
             source.insertUserLocation(newLocation);
 
+            LocationAddress locationAddress = null;
+            try {
+                locationAddress = createLocationAddress(location);
+                source.insertLocationAddress(location.getLatitude(), location.getLongitude(), locationAddress);
+            }
+            catch (IOException e) {
+
+                e.printStackTrace();
+            }
+
             // Save the new location
             mLastLocation = location;
 
@@ -287,6 +298,27 @@ public class TrackerService extends Service
             return TrackerService.this;
         }
     }
+
+    private LocationAddress createLocationAddress(Location location) throws IOException {
+
+        Address geoAddress = getGeoAddress(location);
+
+        return new LocationAddress(
+            geoAddress.getAddressLine(0).split(",")[0],
+            geoAddress.getAdminArea()
+        );
+    }
+
+    private Address getGeoAddress(Location location) throws IOException{
+
+        return mGeocoder.getFromLocation(
+            location.getLatitude(),
+            location.getLongitude(),
+            1
+        )
+        .get(0);
+    }
+
 
     private long getCurrentDateInMilliseconds(Date date) {
 

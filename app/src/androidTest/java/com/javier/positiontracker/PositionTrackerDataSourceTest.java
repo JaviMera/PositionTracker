@@ -378,6 +378,53 @@ public class PositionTrackerDataSourceTest {
         Assert.assertEquals(location2.getProvider(), actualLocation.getProvider());
     }
 
+    @Test
+    public void dbShouldInsertLocationAddress() throws Exception {
+
+        // Arrange
+        double latitude = 80.909090;
+        double longitude = -100.219021;
+
+        String street = "404 Harambe Ave";
+        String area = "Zoo";
+
+        LocationAddress address = new LocationAddress(
+            street,
+            area
+        );
+
+        // Act
+        long rowId = mTarget.insertLocationAddress(latitude, longitude, address);
+
+        // Assert
+        Assert.assertTrue(rowId != -1);
+    }
+
+    @Test
+    public void dbShouldReadLocationAddress() throws Exception {
+
+        // Arrange
+        double latitude = 80.909090;
+        double longitude = -100.219021;
+
+        String street = "404 Harambe Ave";
+        String area = "Zoo";
+
+        LocationAddress address = new LocationAddress(
+            street,
+            area
+        );
+
+        // Act
+        mTarget.insertLocationAddress(latitude, longitude, address);
+        LocationAddress actualAddress = mTarget.readLocationAddress(latitude, longitude);
+
+        // Assert
+        Assert.assertNotNull(actualAddress);
+        Assert.assertEquals(address.getStreet(), actualAddress.getStreet());
+        Assert.assertEquals(address.getArea(), actualAddress.getArea());
+    }
+
     private Date getDate(int year, int month, int day) {
 
         Calendar calendar = Calendar.getInstance();

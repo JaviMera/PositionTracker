@@ -33,12 +33,9 @@ public class LocationAddressTest {
     @Before
     public void setUp() throws Exception {
 
-        Address address = Mockito.mock(Address.class);
-        when(address.getAddressLine(0)).thenReturn(mExpectedStreet);
-        when(address.getAdminArea()).thenReturn(mExpectedArea);
-
         mTarget = new LocationAddress(
-            address,
+            mExpectedStreet,
+            mExpectedArea,
             mExpectedHour,
             mExpectedMinute
         );
@@ -59,17 +56,29 @@ public class LocationAddressTest {
     }
 
     @Test
-    public void getHour() throws Exception {
+    public void getCorrectHourWithOneDigitNumber() throws Exception {
+
+        // Arrange
+        String expectedHour = "0" + mExpectedHour;
+
+        // Act
+        String actualHour = mTarget.getHour();
 
         // Assert
-        Assert.assertEquals(mExpectedHour, mTarget.getHour());
+        Assert.assertEquals(expectedHour, actualHour);
     }
 
     @Test
     public void getMinute() throws Exception {
 
+        // Arrange
+        String expectedMinute = mExpectedMinute + "";
+
+        // Act
+        String actualMinute = mTarget.getMinute();
+
         // Assert
-        Assert.assertEquals(mExpectedMinute, mTarget.getMinute());
+        Assert.assertEquals(expectedMinute, actualMinute);
     }
 
     @Test

@@ -11,23 +11,25 @@ import java.util.Objects;
 
 public class LocationAddress {
 
-    private Address mAddress;
+    private String mStreet;
+    private String mArea;
     private int mHour;
     private int mMinute;
 
-    public LocationAddress(Address address, int hour, int minute) {
+    public LocationAddress(String street, String area) {
 
-        mAddress = address;
-        mHour = hour;
-        mMinute = minute;
+        mStreet = street;
+        mArea = area;
     }
 
     @Override
     public int hashCode() {
 
         int result = 17;
-        result = 31 * result + Objects.hashCode(mAddress.getAddressLine(0));
-        result = 31 * result + Objects.hashCode(mAddress.getAdminArea());
+        result = 31 * result + Objects.hashCode(mStreet);
+        result = 31 * result + Objects.hashCode(mArea);
+        result = 31 * result + Objects.hashCode(mHour);
+        result = 31 * result + Objects.hashCode(mMinute);
 
         return result;
     }
@@ -52,12 +54,22 @@ public class LocationAddress {
 
     public String getStreet() {
 
-        return mAddress.getAddressLine(0).split(",")[0];
+        return mStreet;
     }
 
     public String getArea() {
 
-        return mAddress.getAdminArea();
+        return mArea;
+    }
+
+    public void setHour(int hour) {
+
+        mHour = hour;
+    }
+
+    public void setMinute(int minute) {
+
+        mMinute = minute;
     }
 
     public String getHour() {
