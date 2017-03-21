@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -20,7 +19,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.LocalBroadcastManager;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -106,12 +104,14 @@ public class TrackerActivity extends AppCompatActivity
             TimeLimit timeLimit = mService.getTimeLimit();
 
             // After successfully connecting with the service, check if there was a time limit set
-            if(null != timeLimit) {
+            if(null != timeLimit && timeLimit.getTime() != 0) {
 
                 // If a time limit exists, then change the state of the activity to show the
                 // notification that was previously set by the user
                 mPresenter.setNotificationActive(true);
-                mPresenter.drawMenuIcons();
+
+                // Re-draw the menu panel
+                invalidateOptionsMenu();
             }
 
             mPresenter.setBoundToService(true);
@@ -192,8 +192,8 @@ public class TrackerActivity extends AppCompatActivity
         // Set notification active back to false when the notification has been launched
         mPresenter.setNotificationActive(false);
 
-        // Re-draw the menu icons when the notification has been launched
-        mPresenter.drawMenuIcons();
+        // Re-draw the menu panel
+        invalidateOptionsMenu();
         }
     };
 
@@ -213,29 +213,19 @@ public class TrackerActivity extends AppCompatActivity
         else {
 
             mGpsEnabled = false;
-            mPresenter.setMarkerVisible(false);
-            mPresenter.moveMapCamera(new LatLng(0,0));
-            mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.World), 2000, null);
+
+            if(!mDisplayHomeEnabled) {
+
+                mPresenter.setMarkerVisible(false);
+                mPresenter.moveMapCamera(new LatLng(0,0));
+                mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.World), 2000, null);
+            }
         }
 
-        mPresenter.drawMenuIcons();
+        // Re-draw the menu panel
+        invalidateOptionsMenu();
         }
     };
-
-    private void displayMenuIcons(boolean display) {
-
-        if(mNotificationActive) {
-
-            mMenu.findItem(R.id.action_notification_active).setVisible(display);
-        }
-        else {
-
-            mMenu.findItem(R.id.action_notification_none).setVisible(display);
-        }
-
-        mMenu.findItem(R.id.action_export_data).setVisible(display);
-        mMenu.findItem(R.id.action_date_range).setVisible(display);
-    }
 
     @Override
     public boolean onCreatePanelMenu(int featureId, Menu menu) {
@@ -290,15 +280,18 @@ public class TrackerActivity extends AppCompatActivity
         // This will indicate that the user is currently viewing past locations
         if(mDisplayHomeEnabled) {
 
-            displayMenuIcons(true);
+            mPresenter.displayMenuIcons(true);
 
-            mPresenter.drawMenuIcons();
+            // Re-draw the menu panel
+            invalidateOptionsMenu();
 
-            // Show the appropriate layout
-            onBackPress();
+            mPresenter.setTitle(getString(R.string.app_name));
 
             // Hide the upper right arrow icon
             mPresenter.setDisplayHome(false);
+
+            // Show the appropriate layout
+            onBackPress();
         }
         else {
 
@@ -383,7 +376,9 @@ public class TrackerActivity extends AppCompatActivity
         if(savedInstanceState != null && savedInstanceState.containsKey(mTimeLimitKey)) {
 
             mPresenter.setNotificationActive(true);
-            mPresenter.drawMenuIcons();
+
+            // Re-draw the menu panel
+            invalidateOptionsMenu();
         }
 
         ButterKnife.bind(this);
@@ -485,6 +480,7 @@ public class TrackerActivity extends AppCompatActivity
             case LOCATION_PROVIDER_CODE:
 
                 menuWithGPSOn(mMenu);
+                mPresenter.setMarkerVisible(true);
                 mLocationFab.performClick();
                 break;
         }
@@ -536,6 +532,19 @@ public class TrackerActivity extends AppCompatActivity
     public void onMapReady(GoogleMap googleMap) {
 
         mMap = googleMap;
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+
+            if(getSupportActionBar() != null) {
+
+                mPresenter.moveMapCamera(marker.getPosition());
+                mPresenter.setTitle(marker.getTitle());
+            }
+
+            return true;
+            }
+        });
     }
 
     @Override
@@ -556,7 +565,7 @@ public class TrackerActivity extends AppCompatActivity
             mPresenter.moveMapCamera(mMarkers.get(0).getPosition());
             mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.Streets), 2000, null);
 
-            displayMenuIcons(false);
+            mPresenter.displayMenuIcons(false);
         }
         else {
 
@@ -572,9 +581,16 @@ public class TrackerActivity extends AppCompatActivity
     @Override
     public void onSetNotification(long time, long createdAt) {
 
+        // Notify the service about a time limit being set by the user
         mService.trackTime(time, createdAt);
+
+        // Notify the activity about the notification so it can appropriately draw menu icons
         mPresenter.setNotificationActive(true);
-        mPresenter.drawMenuIcons();
+
+        // Re-draw the menu panel
+        invalidateOptionsMenu();
+
+        // Notify the user about successfully creating a time limit
         mPresenter.showSnackbar(getString(R.string.snackbar_notification_created));
     }
 
@@ -606,9 +622,17 @@ public class TrackerActivity extends AppCompatActivity
 
         if(affectedRow > -1) {
 
+            // By passing 0 for time and created at, the service will identify it as an invalid
+            // time limit, thus it will stop tracking time
             mService.trackTime(0, 0);
+
+            // Notify the activity that the notification has been deleted
             mPresenter.setNotificationActive(false);
-            mPresenter.drawMenuIcons();
+
+            // Re-draw the menu panel
+            invalidateOptionsMenu();
+
+            // Notify the user through a snackbar message about successfully deleting a notification
             mPresenter.showSnackbar(getString(R.string.snackbar_notification_deleted));
         }
         else {
@@ -641,9 +665,19 @@ public class TrackerActivity extends AppCompatActivity
     }
 
     @Override
-    public void drawMenuIcons() {
+    public void displayMenuIcons(boolean display) {
 
-        invalidateOptionsMenu();
+        if(mNotificationActive) {
+
+            mMenu.findItem(R.id.action_notification_active).setVisible(display);
+        }
+        else {
+
+            mMenu.findItem(R.id.action_notification_none).setVisible(display);
+        }
+
+        mMenu.findItem(R.id.action_export_data).setVisible(display);
+        mMenu.findItem(R.id.action_date_range).setVisible(display);
     }
 
     @Override
@@ -690,6 +724,15 @@ public class TrackerActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    public void setTitle(String title) {
+
+        if(getSupportActionBar() != null) {
+
+            getSupportActionBar().setTitle(title);
+        }
+    }
+
     public void showLocations(List<UserLocation> locations) {
 
         for (UserLocation location : locations) {
@@ -711,9 +754,17 @@ public class TrackerActivity extends AppCompatActivity
 
     private MarkerOptions getMarkerOptions(UserLocation location) {
 
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
+
         MarkerOptions options = new MarkerOptions();
         options.position(location.getPosition());
-        options.title(location.toString());
+        options.title(source.readLocationAddress
+            (
+                location.getPosition().latitude,
+                location.getPosition().longitude
+            )
+            .getFullAddress()
+        );
 
         return options;
     }

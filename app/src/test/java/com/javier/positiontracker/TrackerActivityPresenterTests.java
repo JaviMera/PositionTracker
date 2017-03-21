@@ -70,13 +70,16 @@ public class TrackerActivityPresenterTests {
     }
 
     @Test
-    public void drawMenuIcons() throws Exception {
+    public void displayMenuIcons() throws Exception {
+
+        // Arrange
+        boolean display = false;
 
         // Act
-        mTarget.drawMenuIcons();
+        mTarget.displayMenuIcons(display);
 
         // Assert
-        Mockito.verify(mView).drawMenuIcons();
+        Mockito.verify(mView).displayMenuIcons(display);
     }
 
     @Test
@@ -144,5 +147,18 @@ public class TrackerActivityPresenterTests {
 
         // Assert
         Mockito.verify(mView).setMarkerVisible(visible);
+    }
+
+    @Test
+    public void setTitle() throws Exception {
+
+        // Arrange
+        String title = "harambe did 9/11";
+
+        // Act
+        mTarget.setTitle(title);
+
+        // Assert
+        Mockito.verify(mView).setTitle(title);
     }
 }

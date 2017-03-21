@@ -35,9 +35,7 @@ public class LocationAddressTest {
 
         mTarget = new LocationAddress(
             mExpectedStreet,
-            mExpectedArea,
-            mExpectedHour,
-            mExpectedMinute
+            mExpectedArea
         );
     }
 

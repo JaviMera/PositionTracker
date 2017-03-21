@@ -31,9 +31,9 @@ public class TrackerActivityPresenter {
         mView.setNotificationActive(isNotificationActive);
     }
 
-    public void drawMenuIcons() {
+    public void displayMenuIcons(boolean display) {
 
-        mView.drawMenuIcons();
+        mView.displayMenuIcons(display);
     }
 
     public void moveMapCamera(LatLng latLng) {
@@ -59,5 +59,10 @@ public class TrackerActivityPresenter {
     public void setMarkerVisible(boolean visible) {
 
         mView.setMarkerVisible(visible);
+    }
+
+    public void setTitle(String title) {
+
+        mView.setTitle(title);
     }
 }
