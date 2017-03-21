@@ -189,11 +189,11 @@ public class TrackerActivity extends AppCompatActivity
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            // Set notification active back to false when the notification has been launched
-            mPresenter.setNotificationActive(false);
+        // Set notification active back to false when the notification has been launched
+        mPresenter.setNotificationActive(false);
 
-            // Re-draw the menu icons when the notification has been launched
-            mPresenter.drawMenuIcons();
+        // Re-draw the menu icons when the notification has been launched
+        mPresenter.drawMenuIcons();
         }
     };
 
@@ -218,9 +218,24 @@ public class TrackerActivity extends AppCompatActivity
             mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.World), 2000, null);
         }
 
-        invalidateOptionsMenu();
+        mPresenter.drawMenuIcons();
         }
     };
+
+    private void displayMenuIcons(boolean display) {
+
+        if(mNotificationActive) {
+
+            mMenu.findItem(R.id.action_notification_active).setVisible(display);
+        }
+        else {
+
+            mMenu.findItem(R.id.action_notification_none).setVisible(display);
+        }
+
+        mMenu.findItem(R.id.action_export_data).setVisible(display);
+        mMenu.findItem(R.id.action_date_range).setVisible(display);
+    }
 
     @Override
     public boolean onCreatePanelMenu(int featureId, Menu menu) {
@@ -274,6 +289,10 @@ public class TrackerActivity extends AppCompatActivity
         // Check if the upper right arrow icon is showing
         // This will indicate that the user is currently viewing past locations
         if(mDisplayHomeEnabled) {
+
+            displayMenuIcons(true);
+
+            mPresenter.drawMenuIcons();
 
             // Show the appropriate layout
             onBackPress();
@@ -465,8 +484,8 @@ public class TrackerActivity extends AppCompatActivity
 
             case LOCATION_PROVIDER_CODE:
 
-
                 menuWithGPSOn(mMenu);
+                mLocationFab.performClick();
                 break;
         }
     }
@@ -536,6 +555,17 @@ public class TrackerActivity extends AppCompatActivity
             // Move the camera to the first marker in the array of markers
             mPresenter.moveMapCamera(mMarkers.get(0).getPosition());
             mPresenter.zoomMapCamera(ZoomValues.get(CameraLevel.Streets), 2000, null);
+
+            displayMenuIcons(false);
+        }
+        else {
+
+            Toast
+                .makeText(
+                    this,
+                    "You weren't anywhere in those dates. Maybe you disappeared for a while...",
+                    Toast.LENGTH_LONG)
+                .show();
         }
     }
 
@@ -576,6 +606,7 @@ public class TrackerActivity extends AppCompatActivity
 
         if(affectedRow > -1) {
 
+            mService.trackTime(0, 0);
             mPresenter.setNotificationActive(false);
             mPresenter.drawMenuIcons();
             mPresenter.showSnackbar(getString(R.string.snackbar_notification_deleted));

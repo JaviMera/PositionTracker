@@ -30,6 +30,7 @@ import com.javier.positiontracker.model.LocationCounter;
 import com.javier.positiontracker.model.LocationNotification;
 import com.javier.positiontracker.model.LocationProvider;
 import com.javier.positiontracker.model.LocationThreshold;
+import com.javier.positiontracker.model.NullAddress;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
@@ -309,12 +310,13 @@ public class TrackerService extends Service
 
     private Address getGeoAddress(Location location) throws IOException{
 
-        return mGeocoder.getFromLocation(
+        List<Address> geoAddress = mGeocoder.getFromLocation(
             location.getLatitude(),
             location.getLongitude(),
             1
-        )
-        .get(0);
+        );
+
+        return geoAddress.size() > 0 ? geoAddress.get(0) : new NullAddress(Locale.ENGLISH);
     }
 
 
