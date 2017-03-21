@@ -13,6 +13,8 @@ import com.javier.positiontracker.model.LocationAddress;
 import com.javier.positiontracker.model.TimeLimit;
 import com.javier.positiontracker.model.UserLocation;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -442,5 +444,30 @@ public class PositionTrackerDataSource {
         cursor.close();
 
         return address;
+    }
+
+    public boolean readLocation(Location mLastLocation) {
+
+        mDb = mHelper.getReadableDatabase();
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(mLastLocation.getTime());
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+
+        Cursor cursor = mDb.query(
+            PositionTrackerSQLiteHelper.LOCATION_TABLE,
+            null,
+            PositionTrackerSQLiteHelper.LOCATION_LAT + "=? AND " + PositionTrackerSQLiteHelper.LOCATION_LONG + "=? AND " + PositionTrackerSQLiteHelper.LOCATION_DATE + "=?",
+            new String[]{String.valueOf(mLastLocation.getLatitude()), String.valueOf(mLastLocation.getLongitude()), String.valueOf(calendar.getTime().getTime())},
+            null, null, null);
+
+        boolean hasLocation = cursor.moveToFirst();
+        mDb.close();
+        cursor.close();
+
+        return hasLocation;
     }
 }

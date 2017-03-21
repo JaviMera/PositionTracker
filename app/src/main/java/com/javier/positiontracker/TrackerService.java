@@ -186,18 +186,20 @@ public class TrackerService extends Service
     public void onNewLocation(Location location) {
 
         float distance = 0;
+        boolean hasLastLocation = false;
+        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
 
         if(mLastLocation != null) {
 
             distance = mLastLocation.distanceTo(location);
+            hasLastLocation = source.readLocation(mLastLocation);
         }
 
         // Check if the new location is considered a new location based on the distance between
         // last location and new location
-        if(distance >= mSmallestDisplacement || mLastLocation == null) {
+        if(distance >= mSmallestDisplacement || mLastLocation == null || !hasLastLocation) {
 
             UserLocation newLocation = createUserLocation(location);
-            PositionTrackerDataSource source = new PositionTrackerDataSource(this);
             source.insertUserLocation(newLocation);
 
             LocationAddress locationAddress = null;
@@ -255,7 +257,6 @@ public class TrackerService extends Service
         // Notify the activity, if any is listening, about a location change
         mBroadcastLocation.send(mLastLocation);
 
-        PositionTrackerDataSource source = new PositionTrackerDataSource(this);
         if(source.readLastLocation() == null) {
 
             source.insertLastLocation(
