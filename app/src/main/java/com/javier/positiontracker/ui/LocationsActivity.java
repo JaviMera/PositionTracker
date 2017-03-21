@@ -30,6 +30,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import jp.wasabeef.recyclerview.animators.FadeInDownAnimator;
 
 public class LocationsActivity extends AppCompatActivity
     implements LocationsActivityView{
@@ -55,6 +56,11 @@ public class LocationsActivity extends AppCompatActivity
         mPresenter.initializeSpinnerView();
 
         mAddresses = new LinkedList<>();
+
+        RecyclerView.ItemAnimator animator = new FadeInDownAnimator();
+
+        if(mRecyclerView.getItemAnimator() != animator)
+            mRecyclerView.setItemAnimator(animator);
     }
 
     @Override
